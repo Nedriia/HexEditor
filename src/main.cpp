@@ -24,5 +24,6 @@ int main( int argc, char *argv[] )
 	if( argc <= 1 || oBuffer.LoadFromFile( argv[ 1 ] ) != 0 )
 		return -1;
 
+	oBuffer.DisplayDebug();
 	return 0;
 }
