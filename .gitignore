@@ -69,3 +69,7 @@ Testing/
 .cache/
 
 .idea/
+imgui/
+.vs/
+vendor/
+Librairies/

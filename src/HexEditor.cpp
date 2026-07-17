@@ -9,6 +9,10 @@
 #include <iostream>
 #include "Buffer.h"
 
+HexEditor::~HexEditor()
+{
+}
+
 std::string HexEditor::Format( const char* sFormat,... )
 {
 	va_list args;
@@ -22,15 +26,6 @@ std::string HexEditor::Format( const char* sFormat,... )
 	va_end( args );
 
 	return &vec[ 0 ];
-}
-
-void HexEditor::Display( const Buffer& oBuffer )
-{
-#ifdef IMGUI_ENABLED
-	m_oImGUIEditor.Render();
-#elif defined( QT_ENABLED )
-	m_oQTEditor.Render();
-#endif
 }
 
 void HexEditor::DisplayDebugText( const Buffer& oBuffer )

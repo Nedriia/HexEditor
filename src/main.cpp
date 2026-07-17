@@ -2,22 +2,13 @@
 // Created by arthu on 17/07/2026.
 //
 #include "Buffer.h"
-#include "HexEditor.h"
 
-#ifdef LEAK_DETECTOR
-	#include <vld.h>
-	#define ENABLE_GLOBAL_LEAK_DETECTION() VLDGlobalEnable()
-	#define DISABLE_GLOBAL_LEAK_DETECTION() VLDGlobalDisable()
-
-	#define ENABLE_SPECIFIC_LEAK_DETECTION() VLDEnable()
-	#define DISABLE_SPECIFIC_LEAK_DETECTION() VLDDisable()
-#else
-	#define ENABLE_GLOBAL_LEAK_DETECTION() ((void)0)
-	#define DISABLE_GLOBAL_LEAK_DETECTION() ((void)0)
-
-	#define ENABLE_SPECIFIC_LEAK_DETECTION() ((void)0)
-	#define DISABLE_SPECIFIC_LEAK_DETECTION() ((void)0)
+#ifdef IMGUI_ENABLED
+#include "HexEditor_ImGUI.h"
+#elif QT_ENABLED
+#include "HexEditor_QT.h"
 #endif
+
 
 int main( int argc, char *argv[] )
 {
@@ -25,7 +16,17 @@ int main( int argc, char *argv[] )
 	if( argc <= 1 || oBuffer.LoadFromFile( argv[ 1 ] ) != 0 )
 		return -1;
 
-	HexEditor oEditor;
-	oEditor.DisplayDebugText( oBuffer );
+#ifdef IMGUI_ENABLED
+	HexEditor_ImGUI oEditor;
+#elif QT_ENABLED
+	HexEditor_QT oEditor;
+#endif
+	if( oEditor.Init() != 0 )
+		return -1;
+
+	bool bQuit = false;
+	while( !bQuit )
+		oEditor.Render( oBuffer, bQuit );
+
 	return 0;
 }

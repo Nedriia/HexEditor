@@ -6,28 +6,21 @@
 #define HEXEDITOR_HEXEDITOR_H
 
 #include <string>
-#ifdef IMGUI_ENABLED
-#include "HexEditor_ImGUI.h"
-#elif defined(QT_ENABLED)
-#include "HexEditor_QT.h"
-#endif
 
 class Buffer;
 class HexEditor 
 {
 	public:
+		HexEditor(){};
+		~HexEditor();
 
-		std::string Format( const char* sFormat,... );
-		void Display( const Buffer& oBuffer );
-		void DisplayDebugText( const Buffer& oBuffer );
+		virtual int Init(){ return -1; };
+		virtual void Render( const Buffer& oBuffer, bool& bQuit ){};
 
 	private:
 
-#ifdef IMGUI_ENABLED
-	HexEditor_ImGUI m_oImGUIEditor;
-#elif defined(QT_ENABLED)
-	HexEditor_QT m_oQTEditor;
-#endif
+		std::string Format( const char* sFormat,... );
+		void DisplayDebugText( const Buffer& oBuffer );
 };
 
 
