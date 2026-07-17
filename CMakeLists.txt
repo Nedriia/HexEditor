@@ -4,9 +4,10 @@ project(HexEditor)
 set( PROJECT_DIR    "${CMAKE_CURRENT_SOURCE_DIR}" )
 set( SRC_DIR        "${CMAKE_CURRENT_SOURCE_DIR}/src" )
 
-option( IMGUI_VISUAL_DISPLAY "Use ImGui" ON )
+option( IMGUI_VISUAL_DISPLAY "Use ImGui" OFF )
 option( QT_VISUAL_DISPLAY "Use QT" OFF )
 
+option( LEAK_DETECTOR_ENABLE "Enable leak detector" ON )
 
 set( COMMON_SOURCES
                 ${SRC_DIR}/main.cpp
@@ -17,7 +18,6 @@ set( COMMON_SOURCES
 )
 add_executable(${PROJECT_NAME} ${COMMON_SOURCES})
 
-option( LEAK_DETECTOR_ENABLE "Enable leak detector" OFF )
 if( LEAK_DETECTOR_ENABLE )
     target_compile_definitions( ${PROJECT_NAME} PRIVATE LEAK_DETECTOR )
 
