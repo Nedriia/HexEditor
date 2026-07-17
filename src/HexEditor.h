@@ -12,9 +12,9 @@ class HexEditor
 {
 	public:
 		HexEditor(){};
-		~HexEditor();
+		virtual ~HexEditor();
 
-		virtual int Init(){ return -1; };
+		virtual int Init() = 0;
 		virtual void Render( const Buffer& oBuffer, bool& bQuit ){};
 
 	private:

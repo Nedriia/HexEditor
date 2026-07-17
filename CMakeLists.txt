@@ -6,9 +6,9 @@ set(SRC_DIR "${PROJECT_DIR}/src")
 set(LIBS_DIR "${PROJECT_DIR}/Librairies")
 set(VENDOR_DIR "${PROJECT_DIR}/vendor")
 
-option(IMGUI_VISUAL_DISPLAY "Use ImGui" ON)
+option(IMGUI_VISUAL_DISPLAY "Use ImGui" OFF)
 option(QT_VISUAL_DISPLAY "Use QT" OFF)
-option(LEAK_DETECTOR_ENABLE "Enable leak detector" ON)
+option(LEAK_DETECTOR_ENABLE "Enable leak detector" OFF)
 
 add_executable(${PROJECT_NAME}
         ${SRC_DIR}/main.cpp

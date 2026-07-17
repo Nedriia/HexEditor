@@ -2,6 +2,7 @@
 // Created by arthu on 17/07/2026.
 //
 #include "Buffer.h"
+#include "HexEditor.h"
 
 #ifdef IMGUI_ENABLED
 #include "HexEditor_ImGUI.h"
@@ -16,17 +17,18 @@ int main( int argc, char *argv[] )
 	if( argc <= 1 || oBuffer.LoadFromFile( argv[ 1 ] ) != 0 )
 		return -1;
 
+	std::unique_ptr<HexEditor> oEditor;
 #ifdef IMGUI_ENABLED
-	HexEditor_ImGUI oEditor;
+	oEditor = std::make_unique<HexEditor_ImGUI>();
 #elif QT_ENABLED
-	HexEditor_QT oEditor;
+	oEditor = std::make_unique<HexEditor_QT>();
 #endif
-	if( oEditor.Init() != 0 )
+	if( oEditor == nullptr || oEditor->Init() != 0 )
 		return -1;
 
 	bool bQuit = false;
 	while( !bQuit )
-		oEditor.Render( oBuffer, bQuit );
+		oEditor->Render( oBuffer, bQuit );
 
 	return 0;
 }
