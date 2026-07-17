@@ -2,6 +2,7 @@
 // Created by arthu on 17/07/2026.
 //
 #include "Buffer.h"
+#include "HexEditor.h"
 
 #ifdef LEAK_DETECTOR
 	#include <vld.h>
@@ -24,6 +25,7 @@ int main( int argc, char *argv[] )
 	if( argc <= 1 || oBuffer.LoadFromFile( argv[ 1 ] ) != 0 )
 		return -1;
 
-	oBuffer.DisplayDebug();
+	HexEditor oEditor;
+	oEditor.DisplayDebugText( oBuffer );
 	return 0;
 }

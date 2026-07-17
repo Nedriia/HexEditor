@@ -6,9 +6,6 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
-#include <stdarg.h>
-#include <vector>
-#include <sstream>
 
 Buffer::Buffer() 
 	: m_pBuffer( nullptr )
@@ -56,7 +53,7 @@ int Buffer::LoadFromFile( const char* sPathFile )
 
 uint8_t Buffer::ReadAtAdress ( const uint16_t iAdress ) const
 {
-	if( iAdress < 0 || iAdress > m_iSize )
+	if( iAdress < 0 || iAdress >= m_iSize )
 	{
 		std::cout << "ERROR::ADRESS_INVALID" << std::endl;
 		return 0xFF;
@@ -65,29 +62,13 @@ uint8_t Buffer::ReadAtAdress ( const uint16_t iAdress ) const
 	return m_pBuffer[ iAdress ];
 }
 
-std::string Buffer::Format( const char* sFormat,... )
+void Buffer::SetValueAtAdress( const uint16_t iAdress, uint8_t iValue )
 {
-	va_list args;
-	va_start( args,sFormat );
-	size_t len = std::vsnprintf( nullptr,0,sFormat,args );
-	va_end( args );
-
-	std::vector<char> vec( len + 1 );
-	va_start( args,sFormat );
-	std::vsnprintf( &vec[ 0 ],len + 1,sFormat,args );
-	va_end( args );
-
-	return &vec[ 0 ];
-}
-
-void Buffer::DisplayDebug()
-{
-	std::ostringstream oss;
-	for( int i = 0; i < m_iSize; ++i )
+	if( iAdress < 0 || iAdress >= m_iSize )
 	{
-		if( i % 16 == 0 )
-			oss << ( i != 0  ? "\n" : "" ) << Format("%06x ",i);
-		oss << Format( "%02X ",ReadAtAdress( i ) );
+		std::cout << "ERROR::ADRESS_INVALID" << std::endl;
+		return;
 	}
-	std::cout << oss.str() << std::endl;
+
+	m_pBuffer[ iAdress ] = iValue;
 }
