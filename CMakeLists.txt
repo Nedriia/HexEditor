@@ -7,7 +7,7 @@ set( SRC_DIR        "${CMAKE_CURRENT_SOURCE_DIR}/src" )
 option( IMGUI_VISUAL_DISPLAY "Use ImGui" OFF )
 option( QT_VISUAL_DISPLAY "Use QT" OFF )
 
-option( LEAK_DETECTOR_ENABLE "Enable leak detector" ON )
+option( LEAK_DETECTOR_ENABLE "Enable leak detector" OFF )
 
 set( COMMON_SOURCES
                 ${SRC_DIR}/main.cpp
