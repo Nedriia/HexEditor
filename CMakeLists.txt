@@ -6,6 +6,10 @@ set( SRC_DIR        "${CMAKE_CURRENT_SOURCE_DIR}/src" )
 
 add_executable( ${PROJECT_NAME}
                 ${SRC_DIR}/main.cpp
+                ${SRC_DIR}/Buffer.cpp
+                ${SRC_DIR}/Buffer.h
+                ${SRC_DIR}/HexEditor.cpp
+                ${SRC_DIR}/HexEditor.h
 )
 
 option( LEAK_DETECTOR_ENABLE "Enable leak detector" OFF )
