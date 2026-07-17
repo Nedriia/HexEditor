@@ -85,8 +85,8 @@ void Buffer::DisplayDebug()
 	std::ostringstream oss;
 	for( int i = 0; i < m_iSize; ++i )
 	{
-		if( i != 0 && i % 16 == 0 )
-			oss << "\n";
+		if( i % 16 == 0 )
+			oss << ( i != 0  ? "\n" : "" ) << Format("%06x ",i);
 		oss << Format( "%02X ",ReadAtAdress( i ) );
 	}
 	std::cout << oss.str() << std::endl;
