@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <iostream>
 
+#include "Buffer.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -25,6 +26,9 @@
 	#define DISABLE_SPECIFIC_LEAK_DETECTION() ((void)0)
 #endif
 
+#define NULL_DATA_COLOR IM_COL32( 128,128,128,255 )
+#define CHANGE_DATA_COLOR IM_COL32( 255,0,0,255 )
+#define DEFAULT_DATA_COLOR IM_COL32( 255,255,255,180 )
 
 static void glfw_error_callback( int error,const char* description )
 {
@@ -63,7 +67,7 @@ int HexEditor_ImGUI::InitWindow()
 	glfwWindowHint( GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE );
 
 	DISABLE_SPECIFIC_LEAK_DETECTION();
-	m_pWindow = glfwCreateWindow( 800,600,"Hex Editor",nullptr,nullptr );
+	m_pWindow = glfwCreateWindow( 1600,600,"Hex Editor",nullptr,nullptr );
 	if( m_pWindow == nullptr )
 	{
 		std::cout << "DISPLAY::FAILED_TO_CREATE_GLFW_WINDOW" << std::endl;
@@ -82,6 +86,7 @@ int HexEditor_ImGUI::InitWindow()
 		return -1;
 	}
 
+	glfwSwapInterval(1); //Put 0 in case you want to uncap the speed
 	return 0;
 }
 
@@ -103,7 +108,7 @@ void HexEditor_ImGUI::InitImGUI()
 	ImGui_ImplOpenGL3_Init( "#version 330" );
 }
 
-void HexEditor_ImGUI::Update()
+void HexEditor_ImGUI::Update( const Buffer& oBuffer )
 {
 	glfwPollEvents();
 	if( glfwGetWindowAttrib( m_pWindow,GLFW_ICONIFIED ) != 0 )
@@ -118,7 +123,67 @@ void HexEditor_ImGUI::Update()
 
 	if( ImGui::Begin( "Hex Editor",nullptr ) )
 	{
+		static int iBytesPerLine = 32;
+		ImGui::SliderInt( "Bytes per line",&iBytesPerLine,2,32 );
 
+		if( ImGui::BeginListBox( "#",ImVec2( -FLT_MIN,24 * ImGui::GetTextLineHeightWithSpacing() ) ) )
+		{
+			ImGuiListClipper clipper;
+			clipper.Begin( ( oBuffer.GetSize() / iBytesPerLine ),ImGui::GetTextLineHeightWithSpacing() );
+
+			while( clipper.Step() )
+			{
+				for( int line = clipper.DisplayStart; line < clipper.DisplayEnd; ++line )
+				{
+					ImGui::PushID( line );
+
+					int iMemoryIndex = line * iBytesPerLine;
+
+					char buffer[ 64 ];
+					snprintf( buffer,sizeof( buffer ),"0x%04X : ",iMemoryIndex );
+
+					ImGui::Text( "%s", buffer );
+					ImGui::SameLine();
+
+					std::string sAscii;
+					for( int i = 0; i < iBytesPerLine; ++i )
+					{
+						ImGui::PushID( i );
+						if( i == iBytesPerLine / 2 )
+						{
+							ImGui::Text( "|" );
+							ImGui::SameLine();
+						}
+
+						char byteBuffer[ 4 ];
+
+						//ImGui::PushStyleColor( ImGuiCol_Text,oData.IsNULL() ? NULL_DATA_COLOR : oData.HasChanged() ? CHANGE_DATA_COLOR : DEFAULT_DATA_COLOR );
+
+						snprintf( byteBuffer,sizeof( byteBuffer ),"%02X ", oBuffer.ReadAtAdress( line * iBytesPerLine + i ) );
+
+						ImGui::Selectable( byteBuffer );
+						ImGui::SameLine();
+
+						uint8_t val = oBuffer.ReadAtAdress( line * iBytesPerLine + i );
+						if( val != 0 )
+						{
+							if( val < 33 || val > 126 )
+								sAscii += ".";
+							else
+								sAscii += val;
+						}
+
+						ImGui::PopID();
+						//ImGui::PopStyleColor();
+					}
+
+					ImGui::Text( "%s", sAscii.c_str() );
+					ImGui::PopID();
+				}
+			}
+			clipper.End();
+			ImGui::EndListBox();
+		}
 	}
 	ImGui::End();
 }
@@ -130,7 +195,7 @@ void HexEditor_ImGUI::Render( const Buffer& oBuffer, bool& bQuit )
 		if( glfwGetKey( m_pWindow,GLFW_KEY_ESCAPE ) == GLFW_PRESS )
 			glfwSetWindowShouldClose( m_pWindow,true );
 
-		Update();
+		Update( oBuffer );
 
 		glClearColor( 0.f,0.f,0.f,1.f );
 		glClear( GL_COLOR_BUFFER_BIT );
