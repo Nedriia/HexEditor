@@ -16,6 +16,9 @@ class HexEditor_ImGUI : public HexEditor
 		~HexEditor_ImGUI();
 
 		int Init() override;
+		int InitWindow();
+		void InitImGUI();
+		void Update();
 		void Render( const Buffer& oBuffer, bool& bQuit ) override;
 
 		void Quit();

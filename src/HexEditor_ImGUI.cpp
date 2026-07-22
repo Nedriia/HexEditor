@@ -6,6 +6,10 @@
 #include <cstdio>
 #include <iostream>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #ifdef LEAK_DETECTOR
 	#include <vld.h>
 	#define ENABLE_GLOBAL_LEAK_DETECTION() VLDGlobalEnable()
@@ -40,6 +44,16 @@ HexEditor_ImGUI::~HexEditor_ImGUI()
 
 int HexEditor_ImGUI::Init()
 {
+	if ( InitWindow() != 0 )
+		return -1;
+
+	InitImGUI();
+
+	return 0;
+}
+
+int HexEditor_ImGUI::InitWindow()
+{
 	glfwSetErrorCallback( glfw_error_callback );
 	if( !glfwInit() )
 		return -1;
@@ -49,7 +63,7 @@ int HexEditor_ImGUI::Init()
 	glfwWindowHint( GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE );
 
 	DISABLE_SPECIFIC_LEAK_DETECTION();
-	m_pWindow = glfwCreateWindow( 500,200,"Hex Editor",nullptr,nullptr );
+	m_pWindow = glfwCreateWindow( 800,600,"Hex Editor",nullptr,nullptr );
 	if( m_pWindow == nullptr )
 	{
 		std::cout << "DISPLAY::FAILED_TO_CREATE_GLFW_WINDOW" << std::endl;
@@ -71,6 +85,44 @@ int HexEditor_ImGUI::Init()
 	return 0;
 }
 
+void HexEditor_ImGUI::InitImGUI()
+{
+	float main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor( glfwGetPrimaryMonitor() ); // Valid on GLFW 3.3+ only
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui::StyleColorsClassic();
+
+	// Setup scaling
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.ScaleAllSizes( main_scale );        // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
+	style.FontScaleDpi = main_scale;        // Set initial font scale. (using io.ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
+
+	// Setup Platform/Renderer backends
+	ImGui_ImplGlfw_InitForOpenGL( m_pWindow,true );
+	ImGui_ImplOpenGL3_Init( "#version 330" );
+}
+
+void HexEditor_ImGUI::Update()
+{
+	glfwPollEvents();
+	if( glfwGetWindowAttrib( m_pWindow,GLFW_ICONIFIED ) != 0 )
+	{
+		ImGui_ImplGlfw_Sleep( 10 );
+		return;
+	}
+
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+
+	if( ImGui::Begin( "Hex Editor",nullptr ) )
+	{
+
+	}
+	ImGui::End();
+}
+
 void HexEditor_ImGUI::Render( const Buffer& oBuffer, bool& bQuit )
 {
 	if( !glfwWindowShouldClose( m_pWindow ) )
@@ -78,12 +130,22 @@ void HexEditor_ImGUI::Render( const Buffer& oBuffer, bool& bQuit )
 		if( glfwGetKey( m_pWindow,GLFW_KEY_ESCAPE ) == GLFW_PRESS )
 			glfwSetWindowShouldClose( m_pWindow,true );
 
-		glfwPollEvents();
+		Update();
+
+		glClearColor( 0.f,0.f,0.f,1.f );
+		glClear( GL_COLOR_BUFFER_BIT );
+
+		int display_w,display_h;
+		glfwGetFramebufferSize( m_pWindow,&display_w,&display_h );
+		glViewport( 0,0,display_w,display_h );
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
+
+		glfwSwapBuffers( m_pWindow );
 	}
 	else
 		bQuit = true;
-
-	glfwSwapBuffers( m_pWindow );
 }
 
 void HexEditor_ImGUI::Quit()
