@@ -26,7 +26,7 @@
 	#define DISABLE_SPECIFIC_LEAK_DETECTION() ((void)0)
 #endif
 
-#define NULL_DATA_COLOR IM_COL32( 128,128,128,255 )
+#define NULL_DATA_COLOR IM_COL32( 100,100,100,255 )
 #define CHANGE_DATA_COLOR IM_COL32( 255,0,0,255 )
 #define DEFAULT_DATA_COLOR IM_COL32( 255,255,255,180 )
 
@@ -156,25 +156,24 @@ void HexEditor_ImGUI::Update( const Buffer& oBuffer )
 						}
 
 						char byteBuffer[ 4 ];
+						uint8_t iValue = oBuffer.ReadAtAdress( line * iBytesPerLine + i );
+						ImGui::PushStyleColor( ImGuiCol_Text,iValue == 0 ? NULL_DATA_COLOR : DEFAULT_DATA_COLOR );
 
-						//ImGui::PushStyleColor( ImGuiCol_Text,oData.IsNULL() ? NULL_DATA_COLOR : oData.HasChanged() ? CHANGE_DATA_COLOR : DEFAULT_DATA_COLOR );
-
-						snprintf( byteBuffer,sizeof( byteBuffer ),"%02X ", oBuffer.ReadAtAdress( line * iBytesPerLine + i ) );
+						snprintf( byteBuffer,sizeof( byteBuffer ),"%02X ",iValue );
 
 						ImGui::Selectable( byteBuffer );
 						ImGui::SameLine();
 
-						uint8_t val = oBuffer.ReadAtAdress( line * iBytesPerLine + i );
-						if( val != 0 )
+						if( iValue != 0 )
 						{
-							if( val < 33 || val > 126 )
+							if( iValue < 33 || iValue > 126 )
 								sAscii += ".";
 							else
-								sAscii += val;
+								sAscii += iValue;
 						}
 
 						ImGui::PopID();
-						//ImGui::PopStyleColor();
+						ImGui::PopStyleColor();
 					}
 
 					ImGui::Text( "%s", sAscii.c_str() );
@@ -215,10 +214,17 @@ void HexEditor_ImGUI::Render( const Buffer& oBuffer, bool& bQuit )
 
 void HexEditor_ImGUI::Quit()
 {
-	if ( m_pWindow )
-		glfwDestroyWindow( m_pWindow );
-	glfwTerminate();
+	if( m_pWindow != nullptr )
+	{
+		ImGui_ImplOpenGL3_Shutdown();
+		ImGui_ImplGlfw_Shutdown();
 
+		ImGui::DestroyContext();
+
+		glfwDestroyWindow( m_pWindow );
+	}
+
+	glfwTerminate();
 	m_pWindow = nullptr;
 }
 
