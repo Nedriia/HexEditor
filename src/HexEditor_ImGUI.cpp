@@ -5,6 +5,7 @@
 #include "HexEditor_ImGUI.h"
 #include <cstdio>
 #include <iostream>
+#include <vector>
 
 #include "Buffer.h"
 #include "imgui.h"
@@ -27,7 +28,7 @@
 	#define DISABLE_SPECIFIC_LEAK_DETECTION() ((void)0)
 #endif
 
-#define NULL_DATA_COLOR IM_COL32( 100,100,100,255 )
+#define NULL_DATA_COLOR IM_COL32( 75,75,75,255 )
 #define CHANGE_DATA_COLOR IM_COL32( 255,0,0,255 )
 #define DEFAULT_DATA_COLOR IM_COL32( 255,255,255,180 )
 
@@ -127,7 +128,7 @@ void HexEditor_ImGUI::Update( const Buffer& oBuffer )
 		static int iBytesPerLine = 32;
 		ImGui::SliderInt( "Bytes per line",&iBytesPerLine,2,32 );
 
-		if( ImGui::BeginListBox( "#",ImVec2( -FLT_MIN,24 * ImGui::GetTextLineHeightWithSpacing() ) ) )
+		if( ImGui::BeginListBox( "#",ImVec2( -FLT_MIN,48 * ImGui::GetTextLineHeightWithSpacing() ) ) )
 		{
 			ImGuiListClipper clipper;
 			clipper.Begin( ( oBuffer.GetSize() / iBytesPerLine ),ImGui::GetTextLineHeightWithSpacing() );
@@ -146,7 +147,7 @@ void HexEditor_ImGUI::Update( const Buffer& oBuffer )
 					ImGui::Text( "%s", buffer );
 					ImGui::SameLine();
 
-					std::string sAscii;
+					std::vector<std::string> sAscii;
 					for( int i = 0; i < iBytesPerLine; ++i )
 					{
 						ImGui::PushID( i );
@@ -170,17 +171,27 @@ void HexEditor_ImGUI::Update( const Buffer& oBuffer )
 
 						if( iValue != 0 )
 						{
+							char charRepres[ 4 ] {};
 							if( iValue < 33 || iValue > 126 )
-								sAscii += ".";
+								snprintf( charRepres,sizeof( charRepres ),"." );
 							else
-								sAscii += iValue;
+								snprintf( charRepres,sizeof( charRepres ),"%c",iValue );
+							sAscii.push_back( charRepres );
 						}
 
 						ImGui::PopID();
 						ImGui::PopStyleColor();
 					}
 
-					ImGui::Text( "%s", sAscii.c_str() );
+					for( int i = 0; i < sAscii.size(); ++i )
+					{
+						ImGui::PushID( i );
+						ImGuiWindow* window = ImGui::GetCurrentWindow();
+						ImVec2 label_size = ImGui::CalcTextSize( sAscii[i].c_str(),nullptr,true);
+						ImGui::SameLine();
+						ImGui::Selectable( sAscii[ i ].c_str(),false,0,label_size );
+						ImGui::PopID();
+					}
 					ImGui::PopID();
 				}
 			}
