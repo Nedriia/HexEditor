@@ -10,6 +10,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include <imgui_internal.h>
 
 #ifdef LEAK_DETECTOR
 	#include <vld.h>
@@ -139,7 +140,7 @@ void HexEditor_ImGUI::Update( const Buffer& oBuffer )
 
 					int iMemoryIndex = line * iBytesPerLine;
 
-					char buffer[ 64 ];
+					char buffer[ 8 ];
 					snprintf( buffer,sizeof( buffer ),"0x%04X : ",iMemoryIndex );
 
 					ImGui::Text( "%s", buffer );
@@ -161,7 +162,10 @@ void HexEditor_ImGUI::Update( const Buffer& oBuffer )
 
 						snprintf( byteBuffer,sizeof( byteBuffer ),"%02X ",iValue );
 
-						ImGui::Selectable( byteBuffer );
+						ImGuiWindow* window = ImGui::GetCurrentWindow();
+						ImVec2 label_size = ImGui::CalcTextSize( byteBuffer,nullptr,true );
+
+						ImGui::Selectable( byteBuffer, false,0,label_size );
 						ImGui::SameLine();
 
 						if( iValue != 0 )
