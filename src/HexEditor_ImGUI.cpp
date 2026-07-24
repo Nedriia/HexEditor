@@ -13,6 +13,10 @@
 #include "imgui_impl_opengl3.h"
 #include <imgui_internal.h>
 
+#include <sstream>
+#include <chrono>
+
+
 #ifdef LEAK_DETECTOR
 	#include <vld.h>
 	#define ENABLE_GLOBAL_LEAK_DETECTION() VLDGlobalEnable()
@@ -39,6 +43,7 @@ static void glfw_error_callback( int error,const char* description )
 
 HexEditor_ImGUI::HexEditor_ImGUI()
 	: m_pWindow( nullptr )
+	, m_iStartIndex( -1 )
 {
 
 }
@@ -110,8 +115,10 @@ void HexEditor_ImGUI::InitImGUI()
 	ImGui_ImplOpenGL3_Init( "#version 330" );
 }
 
-void HexEditor_ImGUI::Update( const Buffer& oBuffer )
+void HexEditor_ImGUI::Update( Buffer& oBuffer )
 {
+	auto start = std::chrono::high_resolution_clock::now();
+
 	glfwPollEvents();
 	if( glfwGetWindowAttrib( m_pWindow,GLFW_ICONIFIED ) != 0 )
 	{
@@ -128,81 +135,84 @@ void HexEditor_ImGUI::Update( const Buffer& oBuffer )
 		static int iBytesPerLine = 32;
 		ImGui::SliderInt( "Bytes per line",&iBytesPerLine,2,32 );
 
-		if( ImGui::BeginListBox( "#",ImVec2( -FLT_MIN,48 * ImGui::GetTextLineHeightWithSpacing() ) ) )
+		static ImVec2 vLabelSize = { 0,0 };
+		if( ImGui::BeginListBox( "#",ImVec2( -FLT_MIN,80 * ImGui::GetTextLineHeightWithSpacing() ) ) )
 		{
 			ImGuiListClipper clipper;
 			clipper.Begin( ( oBuffer.GetSize() / iBytesPerLine ),ImGui::GetTextLineHeightWithSpacing() );
-
-			while( clipper.Step() )
+			clipper.Step();
+			
+			if( m_iStartIndex != clipper.DisplayStart )
 			{
-				for( int line = clipper.DisplayStart; line < clipper.DisplayEnd; ++line )
+				FormatData( oBuffer,clipper.DisplayStart,clipper.DisplayEnd,iBytesPerLine );
+				m_iStartIndex = clipper.DisplayStart;
+			}
+
+			for( int i = 0; i < m_oDataFormat.m_aHexData.size(); ++i )
+			{
+				vLabelSize.x = 0.f;
+				vLabelSize.y = 0.f;
+				char byteBuffer[ 16 ];
+				snprintf( byteBuffer,sizeof( byteBuffer ),"0X%04X :",i * iBytesPerLine + m_iStartIndex );
+				ImGui::Text( byteBuffer );
+				ImGui::SameLine();
+				for( int j = 0; j < m_oDataFormat.m_aHexData[ i ].size(); ++j )
 				{
-					ImGui::PushID( line );
-
-					int iMemoryIndex = line * iBytesPerLine;
-
-					char buffer[ 8 ];
-					snprintf( buffer,sizeof( buffer ),"0x%04X : ",iMemoryIndex );
-
-					ImGui::Text( "%s", buffer );
+					ImGui::PushID( i * iBytesPerLine + m_iStartIndex + j );
+					char byteBuffer[ 4 ];
+					snprintf( byteBuffer,sizeof( byteBuffer ),"%02X ",m_oDataFormat.m_aHexData[ i ][ j ] );
+					if( vLabelSize.x == 0.0f && vLabelSize.y == 0.0f )
+						vLabelSize = ImGui::CalcTextSize( byteBuffer,nullptr,true );
+					ImGui::Selectable( byteBuffer,false,0,vLabelSize );
 					ImGui::SameLine();
-
-					std::vector<std::string> sAscii;
-					for( int i = 0; i < iBytesPerLine; ++i )
+					if( j == iBytesPerLine / 2 )
 					{
-						ImGui::PushID( i );
-						if( i == iBytesPerLine / 2 )
-						{
-							ImGui::Text( "|" );
-							ImGui::SameLine();
-						}
-
-						char byteBuffer[ 4 ];
-						uint8_t iValue = oBuffer.ReadAtAdress( line * iBytesPerLine + i );
-						ImGui::PushStyleColor( ImGuiCol_Text,iValue == 0 ? NULL_DATA_COLOR : DEFAULT_DATA_COLOR );
-
-						snprintf( byteBuffer,sizeof( byteBuffer ),"%02X ",iValue );
-
-						ImGuiWindow* window = ImGui::GetCurrentWindow();
-						ImVec2 label_size = ImGui::CalcTextSize( byteBuffer,nullptr,true );
-
-						ImGui::Selectable( byteBuffer, false,0,label_size );
+						ImGui::Text( "|" );
 						ImGui::SameLine();
-
-						if( iValue != 0 )
-						{
-							char charRepres[ 4 ] {};
-							if( iValue < 33 || iValue > 126 )
-								snprintf( charRepres,sizeof( charRepres ),"." );
-							else
-								snprintf( charRepres,sizeof( charRepres ),"%c",iValue );
-							sAscii.push_back( charRepres );
-						}
-
-						ImGui::PopID();
-						ImGui::PopStyleColor();
-					}
-
-					for( int i = 0; i < sAscii.size(); ++i )
-					{
-						ImGui::PushID( i );
-						ImGuiWindow* window = ImGui::GetCurrentWindow();
-						ImVec2 label_size = ImGui::CalcTextSize( sAscii[i].c_str(),nullptr,true);
-						ImGui::SameLine();
-						ImGui::Selectable( sAscii[ i ].c_str(),false,0,label_size );
-						ImGui::PopID();
 					}
 					ImGui::PopID();
 				}
+				ImGui::Text( " || " );
+				ImGui::SameLine();
+				vLabelSize.x = 0.f;
+				vLabelSize.y = 0.f;
+				for( int j = 0; j < m_oDataFormat.m_aHexData[ i ].size(); ++j )
+				{
+					ImGui::PushID( i * iBytesPerLine + m_iStartIndex + j );
+					char byteBuffer[ 4 ];
+					if( m_oDataFormat.m_aHexData[ i ][ j ] < 33 || m_oDataFormat.m_aHexData[ i ][ j ] > 126 )
+					{
+						byteBuffer[ 0 ] = '.';
+						byteBuffer[ 1 ] = '\0';
+					}
+					else
+						snprintf( byteBuffer,sizeof( byteBuffer ),"%c",m_oDataFormat.m_aHexData[ i ][ j ] );
+					if( vLabelSize.x == 0.0f && vLabelSize.y == 0.0f )
+						vLabelSize = ImGui::CalcTextSize( byteBuffer,nullptr,true );
+					ImGui::Selectable( byteBuffer,false,0,vLabelSize );
+					ImGui::SameLine();
+					if( j == iBytesPerLine / 2 )
+					{
+						ImGui::Text( "|" );
+						ImGui::SameLine();
+					}
+					ImGui::PopID();
+				}
+
+				ImGui::NewLine();
 			}
+
 			clipper.End();
 			ImGui::EndListBox();
 		}
 	}
 	ImGui::End();
+
+	auto end = _STD chrono::high_resolution_clock::now();
+	_STD cout << _STD chrono::duration<double,_STD milli>( end - start ).count() << " ms " << _STD endl;
 }
 
-void HexEditor_ImGUI::Render( const Buffer& oBuffer, bool& bQuit )
+void HexEditor_ImGUI::Render( Buffer& oBuffer, bool& bQuit )
 {
 	if( !glfwWindowShouldClose( m_pWindow ) )
 	{
@@ -225,6 +235,16 @@ void HexEditor_ImGUI::Render( const Buffer& oBuffer, bool& bQuit )
 	}
 	else
 		bQuit = true;
+}
+
+void HexEditor_ImGUI::FormatData( Buffer& oBuffer,int iStartIndex,int iEndIndex,int iBytesPerLine )
+{
+	m_oDataFormat.m_aHexData.resize( iEndIndex - iStartIndex );
+	for( int i = iStartIndex; i < iEndIndex; ++i )
+	{
+		m_oDataFormat.m_aHexData[i - iStartIndex].resize(32);
+		memcpy( m_oDataFormat.m_aHexData[ i - iStartIndex ].data(),oBuffer.Get() + ( i * iBytesPerLine ),iBytesPerLine);
+	}
 }
 
 void HexEditor_ImGUI::Quit()

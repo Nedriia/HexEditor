@@ -15,9 +15,9 @@ class HexEditor
 		virtual ~HexEditor();
 
 		virtual int Init() = 0;
-		virtual void Render( const Buffer& oBuffer, bool& bQuit ){};
+		virtual void Render( Buffer& oBuffer, bool& bQuit ){};
 
-	private:
+	protected:
 
 		std::string Format( const char* sFormat,... );
 		void DisplayDebugText( const Buffer& oBuffer );

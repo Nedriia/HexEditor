@@ -22,6 +22,7 @@ class Buffer
 		uint8_t ReadAtAdress( const uint16_t iAdress ) const;
 		void SetValueAtAdress( const uint16_t iAdress, uint8_t iValue );
 		uint16_t GetSize() const { return m_iSize; }
+		uint8_t* Get() { return m_pBuffer.get(); }
 
 	private:
 		std::unique_ptr<uint8_t[]> m_pBuffer;

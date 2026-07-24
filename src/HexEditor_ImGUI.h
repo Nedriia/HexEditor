@@ -8,6 +8,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "HexEditor.h"
+#include <vector>
 
 class HexEditor_ImGUI : public HexEditor
 {
@@ -18,13 +19,24 @@ class HexEditor_ImGUI : public HexEditor
 		int Init() override;
 		int InitWindow();
 		void InitImGUI();
-		void Update( const Buffer& oBuffer );
-		void Render( const Buffer& oBuffer, bool& bQuit ) override;
+		void Update( Buffer& oBuffer );
+		void Render( Buffer& oBuffer, bool& bQuit ) override;
+		void FormatData( Buffer& oBuffer, int iStartIndex, int iEndIndex, int iBytesPerLine );
 
 		void Quit();
 	private:
 		GLFWwindow*	m_pWindow;
 		static void framebuffer_size_callback( GLFWwindow* m_pWindow,int width,int height );
+
+		int m_iStartIndex;
+
+		typedef struct
+		{
+			std::vector<std::vector<uint8_t>> m_aHexData;
+			std::vector<std::string> m_aAscii;
+		} MemoryDataFormatted;
+
+		MemoryDataFormatted m_oDataFormat;
 };
 
 

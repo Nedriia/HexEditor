@@ -53,7 +53,7 @@ int Buffer::LoadFromFile( const char* sPathFile )
 
 uint8_t Buffer::ReadAtAdress ( const uint16_t iAdress ) const
 {
-	if( iAdress < 0 || iAdress >= m_iSize )
+	if( iAdress >= m_iSize )
 	{
 		std::cout << "ERROR::ADRESS_INVALID" << std::endl;
 		return 0xFF;
