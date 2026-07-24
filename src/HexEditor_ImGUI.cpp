@@ -148,6 +148,7 @@ void HexEditor_ImGUI::Update( Buffer& oBuffer )
 				m_iStartIndex = clipper.DisplayStart;
 			}
 
+			static int iIndexSelected = -1;
 			for( int i = 0; i < m_oDataFormat.m_aHexData.size(); ++i )
 			{
 				vLabelSize.x = 0.f;
@@ -163,7 +164,8 @@ void HexEditor_ImGUI::Update( Buffer& oBuffer )
 					snprintf( byteBuffer,sizeof( byteBuffer ),"%02X ",m_oDataFormat.m_aHexData[ i ][ j ] );
 					if( vLabelSize.x == 0.0f && vLabelSize.y == 0.0f )
 						vLabelSize = ImGui::CalcTextSize( byteBuffer,nullptr,true );
-					ImGui::Selectable( byteBuffer,false,0,vLabelSize );
+					if( ImGui::Selectable( byteBuffer,i * iBytesPerLine + m_iStartIndex + j == iIndexSelected,0,vLabelSize ) )
+						iIndexSelected = i * iBytesPerLine + m_iStartIndex + j;
 					ImGui::SameLine();
 					if( j == iBytesPerLine / 2 )
 					{
@@ -189,7 +191,8 @@ void HexEditor_ImGUI::Update( Buffer& oBuffer )
 						snprintf( byteBuffer,sizeof( byteBuffer ),"%c",m_oDataFormat.m_aHexData[ i ][ j ] );
 					if( vLabelSize.x == 0.0f && vLabelSize.y == 0.0f )
 						vLabelSize = ImGui::CalcTextSize( byteBuffer,nullptr,true );
-					ImGui::Selectable( byteBuffer,false,0,vLabelSize );
+					if( ImGui::Selectable( byteBuffer,i * iBytesPerLine + m_iStartIndex + j == iIndexSelected,0,vLabelSize ) )
+						iIndexSelected = i * iBytesPerLine + m_iStartIndex + j;
 					ImGui::SameLine();
 					if( j == iBytesPerLine / 2 )
 					{
