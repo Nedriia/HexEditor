@@ -142,7 +142,7 @@ void HexEditor_ImGUI::Update( Buffer& oBuffer )
 			clipper.Begin( ( oBuffer.GetSize() / iBytesPerLine ),ImGui::GetTextLineHeightWithSpacing() );
 			clipper.Step();
 			
-			if( m_iStartIndex != clipper.DisplayStart )
+			if( m_iStartIndex != clipper.DisplayStart || m_oDataFormat.m_aHexData.size() != clipper.DisplayEnd - clipper.DisplayStart )
 			{
 				FormatData( oBuffer,clipper.DisplayStart,clipper.DisplayEnd,iBytesPerLine );
 				m_iStartIndex = clipper.DisplayStart;
@@ -211,8 +211,8 @@ void HexEditor_ImGUI::Update( Buffer& oBuffer )
 	}
 	ImGui::End();
 
-	auto end = _STD chrono::high_resolution_clock::now();
-	_STD cout << _STD chrono::duration<double,_STD milli>( end - start ).count() << " ms " << _STD endl;
+	auto end = std::chrono::high_resolution_clock::now();
+	std::cout << std::chrono::duration<double,std::milli>( end - start ).count() << " ms " << std::endl;
 }
 
 void HexEditor_ImGUI::Render( Buffer& oBuffer, bool& bQuit )
