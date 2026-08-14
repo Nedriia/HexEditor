@@ -6,6 +6,7 @@
 #define HEXEDITOR_HEXEDITOR_H
 
 #include <string>
+#include <cstdint>
 
 class Buffer;
 class HexEditor 
