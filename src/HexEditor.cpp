@@ -13,7 +13,7 @@ HexEditor::~HexEditor()
 {
 }
 
-std::string HexEditor::Format( const char* sFormat,... )
+std::string HexEditor::FormatDebug( const char* sFormat,... )
 {
 	va_list args;
 	va_start( args,sFormat );
@@ -28,14 +28,26 @@ std::string HexEditor::Format( const char* sFormat,... )
 	return &vec[ 0 ];
 }
 
+void HexEditor::FormatData( Buffer& oBuffer,int iStartIndex,int iEndIndex,int iBytesPerLine )
+{
+	//TODO : Should add offset outside of viewport
+	for( int i = iStartIndex; i < iEndIndex; ++i )
+	{
+		uint8_t iIndex = i - iStartIndex;
+		memcpy( m_oDataFormat[i].m_aHexData,oBuffer.Get() + ( i * iBytesPerLine ),iBytesPerLine);
+
+		m_oDataFormat[ i ].m_aAdress = i * iBytesPerLine + iStartIndex;
+	}
+}
+
 void HexEditor::DisplayDebugText( const Buffer& oBuffer )
 {
 	std::ostringstream oss;
 	for( int i = 0; i < oBuffer.GetSize(); ++i )
 	{
 		if( i % 16 == 0 )
-			oss << ( i != 0 ? "\n" : "" ) << Format( "%06x ",i );
-		oss << Format( "%02X ", oBuffer.ReadAtAdress( i ) );
+			oss << ( i != 0 ? "\n" : "" ) << FormatDebug( "%06x ",i );
+		oss << FormatDebug( "%02X ", oBuffer.ReadAtAdress( i ) );
 	}
 	std::cout << oss.str() << std::endl;
 }

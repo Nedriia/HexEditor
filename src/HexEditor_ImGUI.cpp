@@ -74,7 +74,7 @@ int HexEditor_ImGUI::InitWindow()
 	glfwWindowHint( GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE );
 
 	DISABLE_SPECIFIC_LEAK_DETECTION();
-	m_pWindow = glfwCreateWindow( 1600,600,"Hex Editor",nullptr,nullptr );
+	m_pWindow = glfwCreateWindow( 3440,1440,"Hex Editor",nullptr,nullptr );
 	if( m_pWindow == nullptr )
 	{
 		std::cout << "DISPLAY::FAILED_TO_CREATE_GLFW_WINDOW" << std::endl;
@@ -135,68 +135,51 @@ void HexEditor_ImGUI::Update( Buffer& oBuffer )
 		static int iBytesPerLine = 32;
 		ImGui::SliderInt( "Bytes per line",&iBytesPerLine,2,32 );
 
-		static ImVec2 vLabelSize = { 0,0 };
 		if( ImGui::BeginListBox( "#",ImVec2( -FLT_MIN,80 * ImGui::GetTextLineHeightWithSpacing() ) ) )
 		{
 			ImGuiListClipper clipper;
 			clipper.Begin( ( oBuffer.GetSize() / iBytesPerLine ),ImGui::GetTextLineHeightWithSpacing() );
 			clipper.Step();
 			
-			if( m_iStartIndex != clipper.DisplayStart || m_oDataFormat.m_aHexData.size() != clipper.DisplayEnd - clipper.DisplayStart )
+			if( m_iStartIndex != clipper.DisplayStart /*|| clipper.DisplayEnd - clipper.DisplayStart != 8*/ )
 			{
-				FormatData( oBuffer,clipper.DisplayStart,clipper.DisplayEnd,iBytesPerLine );
 				m_iStartIndex = clipper.DisplayStart;
+				FormatData( oBuffer,m_iStartIndex,clipper.DisplayEnd,iBytesPerLine );
 			}
 
 			static int iIndexSelected = -1;
-			for( int i = 0; i < m_oDataFormat.m_aHexData.size(); ++i )
+			for( int i = m_iStartIndex; i < clipper.DisplayEnd; ++i )
 			{
-				vLabelSize.x = 0.f;
-				vLabelSize.y = 0.f;
-				char byteBuffer[ 16 ];
-				snprintf( byteBuffer,sizeof( byteBuffer ),"0X%04X :",i * iBytesPerLine + m_iStartIndex );
-				ImGui::Text( byteBuffer );
+				ImGui::Text( "0X%04X	: ", m_oDataFormat[i].m_aAdress );
 				ImGui::SameLine();
-				for( int j = 0; j < m_oDataFormat.m_aHexData[ i ].size(); ++j )
+				for( int j = 0; j < iBytesPerLine; ++j )
 				{
 					ImGui::PushID( i * iBytesPerLine + m_iStartIndex + j );
-					char byteBuffer[ 4 ];
-					snprintf( byteBuffer,sizeof( byteBuffer ),"%02X ",m_oDataFormat.m_aHexData[ i ][ j ] );
-					if( vLabelSize.x == 0.0f && vLabelSize.y == 0.0f )
-						vLabelSize = ImGui::CalcTextSize( byteBuffer,nullptr,true );
-					if( ImGui::Selectable( byteBuffer,i * iBytesPerLine + m_iStartIndex + j == iIndexSelected,0,vLabelSize ) )
-						iIndexSelected = i * iBytesPerLine + m_iStartIndex + j;
+					ImGui::Text( "%02X ", m_oDataFormat[i].m_aHexData[j],nullptr);
 					ImGui::SameLine();
-					if( j == iBytesPerLine / 2 )
+					if( j + 1 == iBytesPerLine / 2 )
 					{
-						ImGui::Text( "|" );
+						ImGui::Text( " " );
 						ImGui::SameLine();
 					}
 					ImGui::PopID();
 				}
-				ImGui::Text( " || " );
+
+				ImGui::Text( " | " );
 				ImGui::SameLine();
-				vLabelSize.x = 0.f;
-				vLabelSize.y = 0.f;
-				for( int j = 0; j < m_oDataFormat.m_aHexData[ i ].size(); ++j )
+
+				for( int j = 0; j < iBytesPerLine; ++j )
 				{
 					ImGui::PushID( i * iBytesPerLine + m_iStartIndex + j );
-					char byteBuffer[ 4 ];
-					if( m_oDataFormat.m_aHexData[ i ][ j ] < 33 || m_oDataFormat.m_aHexData[ i ][ j ] > 126 )
-					{
-						byteBuffer[ 0 ] = '.';
-						byteBuffer[ 1 ] = '\0';
-					}
+					if( m_oDataFormat[ i ].m_aHexData[ j ] < 33 || m_oDataFormat[ i ].m_aHexData[ j ] > 126 )
+						ImGui::TextEx( "." );
 					else
-						snprintf( byteBuffer,sizeof( byteBuffer ),"%c",m_oDataFormat.m_aHexData[ i ][ j ] );
-					if( vLabelSize.x == 0.0f && vLabelSize.y == 0.0f )
-						vLabelSize = ImGui::CalcTextSize( byteBuffer,nullptr,true );
-					if( ImGui::Selectable( byteBuffer,i * iBytesPerLine + m_iStartIndex + j == iIndexSelected,0,vLabelSize ) )
-						iIndexSelected = i * iBytesPerLine + m_iStartIndex + j;
+						ImGui::Text( "%c",m_oDataFormat[ i ].m_aHexData[ j ] );
+
 					ImGui::SameLine();
-					if( j == iBytesPerLine / 2 )
+					if( j + 1 == iBytesPerLine / 2 )
 					{
-						ImGui::Text( "|" );
+						ImGui::Text( " " );
 						ImGui::SameLine();
 					}
 					ImGui::PopID();
@@ -238,16 +221,6 @@ void HexEditor_ImGUI::Render( Buffer& oBuffer, bool& bQuit )
 	}
 	else
 		bQuit = true;
-}
-
-void HexEditor_ImGUI::FormatData( Buffer& oBuffer,int iStartIndex,int iEndIndex,int iBytesPerLine )
-{
-	m_oDataFormat.m_aHexData.resize( iEndIndex - iStartIndex );
-	for( int i = iStartIndex; i < iEndIndex; ++i )
-	{
-		m_oDataFormat.m_aHexData[i - iStartIndex].resize(32);
-		memcpy( m_oDataFormat.m_aHexData[ i - iStartIndex ].data(),oBuffer.Get() + ( i * iBytesPerLine ),iBytesPerLine);
-	}
 }
 
 void HexEditor_ImGUI::Quit()

@@ -21,7 +21,6 @@ class HexEditor_ImGUI : public HexEditor
 		void InitImGUI();
 		void Update( Buffer& oBuffer );
 		void Render( Buffer& oBuffer, bool& bQuit ) override;
-		void FormatData( Buffer& oBuffer, int iStartIndex, int iEndIndex, int iBytesPerLine );
 
 		void Quit();
 	private:
@@ -29,14 +28,6 @@ class HexEditor_ImGUI : public HexEditor
 		static void framebuffer_size_callback( GLFWwindow* m_pWindow,int width,int height );
 
 		int m_iStartIndex;
-
-		typedef struct
-		{
-			std::vector<std::vector<uint8_t>> m_aHexData;
-			std::vector<std::string> m_aAscii;
-		} MemoryDataFormatted;
-
-		MemoryDataFormatted m_oDataFormat;
 };
 
 
