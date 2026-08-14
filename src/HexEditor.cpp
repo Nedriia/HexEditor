@@ -7,6 +7,7 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include <cstring>
 #include "Buffer.h"
 
 HexEditor::~HexEditor()
