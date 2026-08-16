@@ -20,6 +20,8 @@ class HexEditor_ImGUI : public HexEditor
 		int InitWindow();
 		void InitImGUI();
 		void Update( Buffer& oBuffer );
+		void UpdateWithText( Buffer& oBuffer );
+		void UpdateWithDrawList( Buffer& oBuffer );
 		void Render( Buffer& oBuffer, bool& bQuit ) override;
 
 		void Quit();

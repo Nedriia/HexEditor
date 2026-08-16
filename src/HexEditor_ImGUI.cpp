@@ -132,70 +132,142 @@ void HexEditor_ImGUI::Update( Buffer& oBuffer )
 
 	if( ImGui::Begin( "Hex Editor",nullptr ) )
 	{
-		static int iBytesPerLine = 32;
-		ImGui::SliderInt( "Bytes per line",&iBytesPerLine,2,32 );
-
-		if( ImGui::BeginListBox( "#",ImVec2( -FLT_MIN,80 * ImGui::GetTextLineHeightWithSpacing() ) ) )
-		{
-			ImGuiListClipper clipper;
-			clipper.Begin( ( oBuffer.GetSize() / iBytesPerLine ),ImGui::GetTextLineHeightWithSpacing() );
-			clipper.Step();
-			
-			if( m_iStartIndex != clipper.DisplayStart /*|| clipper.DisplayEnd - clipper.DisplayStart != 8*/ )
-			{
-				m_iStartIndex = clipper.DisplayStart;
-				FormatData( oBuffer,m_iStartIndex,clipper.DisplayEnd,iBytesPerLine );
-			}
-
-			static int iIndexSelected = -1;
-			for( int i = m_iStartIndex; i < clipper.DisplayEnd; ++i )
-			{
-				ImGui::Text( "0X%04X	: ", m_oDataFormat[i].m_aAdress );
-				ImGui::SameLine();
-				for( int j = 0; j < iBytesPerLine; ++j )
-				{
-					ImGui::PushID( i * iBytesPerLine + m_iStartIndex + j );
-					ImGui::Text( "%02X ", m_oDataFormat[i].m_aHexData[j],nullptr);
-					ImGui::SameLine();
-					if( j + 1 == iBytesPerLine / 2 )
-					{
-						ImGui::Text( " " );
-						ImGui::SameLine();
-					}
-					ImGui::PopID();
-				}
-
-				ImGui::Text( " | " );
-				ImGui::SameLine();
-
-				for( int j = 0; j < iBytesPerLine; ++j )
-				{
-					ImGui::PushID( i * iBytesPerLine + m_iStartIndex + j );
-					if( m_oDataFormat[ i ].m_aHexData[ j ] < 33 || m_oDataFormat[ i ].m_aHexData[ j ] > 126 )
-						ImGui::TextEx( "." );
-					else
-						ImGui::Text( "%c",m_oDataFormat[ i ].m_aHexData[ j ] );
-
-					ImGui::SameLine();
-					if( j + 1 == iBytesPerLine / 2 )
-					{
-						ImGui::Text( " " );
-						ImGui::SameLine();
-					}
-					ImGui::PopID();
-				}
-
-				ImGui::NewLine();
-			}
-
-			clipper.End();
-			ImGui::EndListBox();
-		}
+		//UpdateWithText( oBuffer );
+		UpdateWithDrawList( oBuffer );
 	}
 	ImGui::End();
 
 	auto end = std::chrono::high_resolution_clock::now();
 	std::cout << std::chrono::duration<double,std::milli>( end - start ).count() << " ms " << std::endl;
+}
+
+void HexEditor_ImGUI::UpdateWithText( Buffer& oBuffer )
+{
+	static int iBytesPerLine = 32;
+	ImGui::SliderInt( "Bytes per line",&iBytesPerLine,2,32 );
+
+	if( ImGui::BeginListBox( "#",ImVec2( -FLT_MIN,100 * ImGui::GetTextLineHeight() ) ) )
+	{
+		ImGuiListClipper clipper;
+		clipper.Begin( ( oBuffer.GetSize() / iBytesPerLine ),ImGui::GetTextLineHeight() );
+		clipper.Step();
+
+		if( m_iStartIndex != clipper.DisplayStart /*|| clipper.DisplayEnd - clipper.DisplayStart != 8*/ )
+		{
+			m_iStartIndex = clipper.DisplayStart;
+			FormatData( oBuffer,m_iStartIndex,clipper.DisplayEnd,iBytesPerLine );
+		}
+
+		static int iIndexSelected = -1;
+		for( int i = m_iStartIndex; i < clipper.DisplayEnd; ++i )
+		{
+			ImGui::Text( "0X%04X	: ",m_oDataFormat[ i ].m_aAdress );
+			ImGui::SameLine();
+			for( int j = 0; j < iBytesPerLine; ++j )
+			{
+				ImGui::PushID( i * iBytesPerLine + m_iStartIndex + j );
+				ImGui::Text( "%02X ",m_oDataFormat[ i ].m_aHexData[ j ],nullptr );
+				ImGui::SameLine();
+				if( j + 1 == iBytesPerLine / 2 )
+				{
+					ImGui::Text( " " );
+					ImGui::SameLine();
+				}
+				ImGui::PopID();
+			}
+
+			ImGui::Text( " | " );
+			ImGui::SameLine();
+
+			for( int j = 0; j < iBytesPerLine; ++j )
+			{
+				ImGui::PushID( i * iBytesPerLine + m_iStartIndex + j );
+				if( m_oDataFormat[ i ].m_aHexData[ j ] < 33 || m_oDataFormat[ i ].m_aHexData[ j ] > 126 )
+					ImGui::TextEx( "." );
+				else
+					ImGui::Text( "%c",m_oDataFormat[ i ].m_aHexData[ j ] );
+
+				ImGui::SameLine();
+				if( j + 1 == iBytesPerLine / 2 )
+				{
+					ImGui::Text( " " );
+					ImGui::SameLine();
+				}
+				ImGui::PopID();
+			}
+
+			ImGui::NewLine();
+		}
+
+		clipper.End();
+		ImGui::EndListBox();
+	}
+}
+
+void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
+{
+	static int iBytesPerLine = 32;
+
+	float footer_height = 10.f;
+	ImGuiStyle& style = ImGui::GetStyle();
+	const float height_separator = style.ItemSpacing.y;
+	footer_height += height_separator + ImGui::GetFrameHeightWithSpacing() * 1;
+
+	ImGui::BeginChild( "##scrolling",ImVec2( 0,-footer_height ),false,ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav );
+	ImDrawList* draw_list = ImGui::GetWindowDrawList();
+	
+	ImVec2 window_pos = ImGui::GetWindowPos();
+	float PosAsciiStart = 800;
+	draw_list->AddLine( ImVec2( window_pos.x + PosAsciiStart - 20 ,window_pos.y ),ImVec2( window_pos.x + PosAsciiStart - 20,window_pos.y + 9999 ),ImGui::GetColorU32( ImGuiCol_Border ) );
+
+	const int line_total_count = ( oBuffer.GetSize() / iBytesPerLine );
+	ImGuiListClipper clipper;
+	clipper.Begin( line_total_count,ImGui::GetTextLineHeight() );
+
+	while( clipper.Step() )
+	{
+		if( m_iStartIndex != clipper.DisplayStart /*|| clipper.DisplayEnd - clipper.DisplayStart != 8*/ )
+		{
+			m_iStartIndex = clipper.DisplayStart;
+			FormatData( oBuffer,m_iStartIndex,clipper.DisplayEnd,iBytesPerLine );
+		}
+		for( int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++ )
+		{
+			ImGui::Text( "%04X:",m_oDataFormat[ line_i ].m_aAdress );
+
+			for( int n = 0; n < iBytesPerLine; ++n )
+			{
+				ImGui::SameLine();
+				if( m_oDataFormat[ line_i ].m_aHexData[ n ] == 0 )
+					ImGui::TextDisabled( "00" );
+				else
+					ImGui::Text( "%02X", m_oDataFormat[ line_i ].m_aHexData[ n ] );
+			}
+
+			for( int n = 0; n < iBytesPerLine; ++n )
+			{
+				ImGui::SameLine( n == 0 ? PosAsciiStart : 0 );
+				if( m_oDataFormat[ line_i ].m_aHexData[ n ] < 33 || m_oDataFormat[ line_i ].m_aHexData[ n ] > 126 )
+					ImGui::TextEx( "." );
+				else
+					ImGui::Text( "%c",m_oDataFormat[ line_i ].m_aHexData[ n ] );
+			}
+		}
+	}
+
+	ImGui::EndChild();
+	ImGui::Separator();
+
+	ImGui::SetNextItemWidth( 10 * 7 + style.FramePadding.x * 2.0f );
+	if( ImGui::DragInt( "##cols",&iBytesPerLine,0.2f,4,32,"%d cols" ) ) { if( iBytesPerLine < 1 ) iBytesPerLine = 1; }
+	ImGui::SameLine();
+	size_t base_display_addr = 0X0000;
+	const char* format_range = "Range " "%04X..%04X";
+	ImGui::Text( format_range,base_display_addr,base_display_addr + oBuffer.GetSize() );
+
+	//Dec
+	//Hex
+	//Binary
 }
 
 void HexEditor_ImGUI::Render( Buffer& oBuffer, bool& bQuit )
