@@ -226,31 +226,36 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 
 	while( clipper.Step() )
 	{
-		if( m_iStartIndex != clipper.DisplayStart /*|| clipper.DisplayEnd - clipper.DisplayStart != 8*/ )
-		{
-			m_iStartIndex = clipper.DisplayStart;
-			FormatData( oBuffer,m_iStartIndex,clipper.DisplayEnd,iBytesPerLine );
-		}
+		uint16_t iStartAdress = 0;
+		int iStartIndex = 0;
 		for( int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++ )
 		{
-			ImGui::Text( "%04X:",m_oDataFormat[ line_i ].m_aAdress );
-
-			for( int n = 0; n < iBytesPerLine; ++n )
+			ImGui::Text( "%04X:",iStartAdress + line_i * iBytesPerLine );
+			for( int n = iStartIndex; n < iBytesPerLine + iStartIndex; ++n )
 			{
+				uint8_t* it = oBuffer.Get() + ( line_i * iBytesPerLine ) + n;
+				if( n == iBytesPerLine / 2 )
+				{
+					ImGui::SameLine();
+					ImGui::Text( " " );
+				}
+
 				ImGui::SameLine();
-				if( m_oDataFormat[ line_i ].m_aHexData[ n ] == 0 )
+				if( ( *it ) == 0 )
 					ImGui::TextDisabled( "00" );
 				else
-					ImGui::Text( "%02X", m_oDataFormat[ line_i ].m_aHexData[ n ] );
+					ImGui::Text( "%02X",( *it ) );
 			}
 
+			//ASCII
 			for( int n = 0; n < iBytesPerLine; ++n )
 			{
+				uint8_t* it = oBuffer.Get() + ( line_i * iBytesPerLine ) + n;
 				ImGui::SameLine( n == 0 ? PosAsciiStart : 0 );
-				if( m_oDataFormat[ line_i ].m_aHexData[ n ] < 33 || m_oDataFormat[ line_i ].m_aHexData[ n ] > 126 )
+				if( ( *it ) < 33 || ( *it ) > 126 )
 					ImGui::TextEx( "." );
 				else
-					ImGui::Text( "%c",m_oDataFormat[ line_i ].m_aHexData[ n ] );
+					ImGui::Text( "%c",( *it ) );
 			}
 		}
 	}
