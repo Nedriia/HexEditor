@@ -130,7 +130,10 @@ void HexEditor_ImGUI::Update( Buffer& oBuffer )
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	if( ImGui::Begin( "Hex Editor",nullptr ) )
+	static double iDurationMs;
+	char titleBuffer[ 128 ];
+	std::snprintf( titleBuffer,sizeof( titleBuffer ),"Hex Editor (%.2f ms)###HexEditorWindow",iDurationMs );
+	if( ImGui::Begin( titleBuffer,nullptr ) )
 	{
 		//UpdateWithText( oBuffer );
 		UpdateWithDrawList( oBuffer );
@@ -138,7 +141,7 @@ void HexEditor_ImGUI::Update( Buffer& oBuffer )
 	ImGui::End();
 
 	auto end = std::chrono::high_resolution_clock::now();
-	std::cout << std::chrono::duration<double,std::milli>( end - start ).count() << " ms " << std::endl;
+	iDurationMs = std::chrono::duration<double,std::milli>( end - start ).count();
 }
 
 void HexEditor_ImGUI::UpdateWithText( Buffer& oBuffer )
