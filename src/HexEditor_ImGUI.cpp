@@ -134,77 +134,12 @@ void HexEditor_ImGUI::Update( Buffer& oBuffer )
 	char titleBuffer[ 128 ];
 	std::snprintf( titleBuffer,sizeof( titleBuffer ),"Hex Editor (%.2f ms)###HexEditorWindow",iDurationMs );
 	if( ImGui::Begin( titleBuffer,nullptr ) )
-	{
-		//UpdateWithText( oBuffer );
 		UpdateWithDrawList( oBuffer );
-	}
+	
 	ImGui::End();
 
 	auto end = std::chrono::high_resolution_clock::now();
 	iDurationMs = std::chrono::duration<double,std::milli>( end - start ).count();
-}
-
-void HexEditor_ImGUI::UpdateWithText( Buffer& oBuffer )
-{
-	static int iBytesPerLine = 32;
-	ImGui::SliderInt( "Bytes per line",&iBytesPerLine,2,32 );
-
-	if( ImGui::BeginListBox( "#",ImVec2( -FLT_MIN,100 * ImGui::GetTextLineHeight() ) ) )
-	{
-		ImGuiListClipper clipper;
-		clipper.Begin( ( oBuffer.GetSize() / iBytesPerLine ),ImGui::GetTextLineHeight() );
-		clipper.Step();
-
-		if( m_iStartIndex != clipper.DisplayStart /*|| clipper.DisplayEnd - clipper.DisplayStart != 8*/ )
-		{
-			m_iStartIndex = clipper.DisplayStart;
-			FormatData( oBuffer,m_iStartIndex,clipper.DisplayEnd,iBytesPerLine );
-		}
-
-		static int iIndexSelected = -1;
-		for( int i = m_iStartIndex; i < clipper.DisplayEnd; ++i )
-		{
-			ImGui::Text( "0X%04X	: ",m_oDataFormat[ i ].m_aAdress );
-			ImGui::SameLine();
-			for( int j = 0; j < iBytesPerLine; ++j )
-			{
-				ImGui::PushID( i * iBytesPerLine + m_iStartIndex + j );
-				ImGui::Text( "%02X ",m_oDataFormat[ i ].m_aHexData[ j ],nullptr );
-				ImGui::SameLine();
-				if( j + 1 == iBytesPerLine / 2 )
-				{
-					ImGui::Text( " " );
-					ImGui::SameLine();
-				}
-				ImGui::PopID();
-			}
-
-			ImGui::Text( " | " );
-			ImGui::SameLine();
-
-			for( int j = 0; j < iBytesPerLine; ++j )
-			{
-				ImGui::PushID( i * iBytesPerLine + m_iStartIndex + j );
-				if( m_oDataFormat[ i ].m_aHexData[ j ] < 33 || m_oDataFormat[ i ].m_aHexData[ j ] > 126 )
-					ImGui::TextEx( "." );
-				else
-					ImGui::Text( "%c",m_oDataFormat[ i ].m_aHexData[ j ] );
-
-				ImGui::SameLine();
-				if( j + 1 == iBytesPerLine / 2 )
-				{
-					ImGui::Text( " " );
-					ImGui::SameLine();
-				}
-				ImGui::PopID();
-			}
-
-			ImGui::NewLine();
-		}
-
-		clipper.End();
-		ImGui::EndListBox();
-	}
 }
 
 void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
@@ -221,9 +156,10 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 
 	ImVec2 window_pos = ImGui::GetWindowPos();
 	float fFontSize = ( ImGui::CalcTextSize( "FF" ).x + 1 );
-	float PosAsciiStart = 40.0f * style.FontScaleDpi + ( iBytesPerLine * fFontSize + ( ( iBytesPerLine * 20.0f * style.FontScaleDpi ) - iBytesPerLine * fFontSize ) ) + 10.5f * style.FontScaleDpi;
+	float PosAsciiStart = ( ImGui::CalcTextSize( "FFFFFFFF" ).x + 1 ) + iBytesPerLine * ( fFontSize + ( 3.5f * style.FontScaleDpi ) ) + ( 15.f * style.FontScaleDpi );
 	draw_list->AddLine( ImVec2( window_pos.x + PosAsciiStart,window_pos.y ),ImVec2( window_pos.x + PosAsciiStart,window_pos.y + 9999 ),ImGui::GetColorU32( ImGuiCol_Border ) );
 	PosAsciiStart += fFontSize;
+	ImVec2 pos = { window_pos.x, window_pos.y };
 
 	const int line_total_count = ( oBuffer.GetSize() / iBytesPerLine );
 	ImGuiListClipper clipper;
@@ -235,32 +171,39 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 		int iStartIndex = 0;
 		for( int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++ )
 		{
-			ImGui::Text( "%04X:",iStartAdress + line_i * iBytesPerLine );
-			float fStartPos = 40.f;
+			char aBuffer[24];
+			snprintf( aBuffer, sizeof( aBuffer), "0X%04X:",iStartAdress + line_i * iBytesPerLine );
+			draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_TabHovered ),aBuffer );
+			pos.x += ImGui::CalcTextSize( "FFFFFFFF" ).x + 1;
+
 			for( int n = iStartIndex; n < iBytesPerLine + iStartIndex; ++n )
 			{
-				float byte_pos_x = ( 20 * n + fStartPos ) * style.FontScaleDpi;
-				if( n + 1 == iBytesPerLine / 2 )
-					fStartPos += 10.5f;
-				ImGui::SameLine( byte_pos_x );
-
 				uint8_t* it = oBuffer.Get() + ( line_i * iBytesPerLine ) + n;
+				snprintf( aBuffer,sizeof( aBuffer ),"%02X",( *it ) );
 				if( ( *it ) == 0 )
-					ImGui::TextDisabled( "00" );
+					draw_list->AddText( pos,ImGui::ColorConvertFloat4ToU32( ImVec4( 0.40f,0.40f,0.40f,1.00f ) ),aBuffer );
 				else
-					ImGui::Text( "%02X",( *it ) );
+					draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_Text ),aBuffer );
+
+				if( n + 1 == iBytesPerLine / 2 )
+					pos.x += fFontSize + ( 15.f * style.FontScaleDpi );
+				else
+					pos.x += fFontSize + ( 3.5f * style.FontScaleDpi );
 			}
+			pos.x = window_pos.x + PosAsciiStart;
 
 			//ASCII
 			for( int n = 0; n < iBytesPerLine; ++n )
 			{
 				uint8_t* it = oBuffer.Get() + ( line_i * iBytesPerLine ) + n;
 				ImGui::SameLine( n == 0 ? PosAsciiStart : 0 );
-				if( ( *it ) < 33 || ( *it ) > 126 )
-					ImGui::TextEx( "." );
-				else
-					ImGui::Text( "%c",( *it ) );
+				char display_c = ( ( *it ) < 32 || ( *it ) >= 128 ) ? '.' : ( *it );
+				draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_Text ), &display_c, &display_c + 1 );
+				pos.x += ( ImGui::CalcTextSize( "F" ).x + 2.5f ) * style.FontScaleDpi;
 			}
+
+			pos.y += 15.0f * style.FontScaleDpi;
+			pos.x = window_pos.x;
 		}
 	}
 
