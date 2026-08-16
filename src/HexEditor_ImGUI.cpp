@@ -18,18 +18,18 @@
 
 
 #ifdef LEAK_DETECTOR
-	#include <vld.h>
-	#define ENABLE_GLOBAL_LEAK_DETECTION() VLDGlobalEnable()
-	#define DISABLE_GLOBAL_LEAK_DETECTION() VLDGlobalDisable()
+#include <vld.h>
+#define ENABLE_GLOBAL_LEAK_DETECTION() VLDGlobalEnable()
+#define DISABLE_GLOBAL_LEAK_DETECTION() VLDGlobalDisable()
 
-	#define ENABLE_SPECIFIC_LEAK_DETECTION() VLDEnable()
-	#define DISABLE_SPECIFIC_LEAK_DETECTION() VLDDisable()
+#define ENABLE_SPECIFIC_LEAK_DETECTION() VLDEnable()
+#define DISABLE_SPECIFIC_LEAK_DETECTION() VLDDisable()
 #else
-	#define ENABLE_GLOBAL_LEAK_DETECTION() ((void)0)
-	#define DISABLE_GLOBAL_LEAK_DETECTION() ((void)0)
+#define ENABLE_GLOBAL_LEAK_DETECTION() ((void)0)
+#define DISABLE_GLOBAL_LEAK_DETECTION() ((void)0)
 
-	#define ENABLE_SPECIFIC_LEAK_DETECTION() ((void)0)
-	#define DISABLE_SPECIFIC_LEAK_DETECTION() ((void)0)
+#define ENABLE_SPECIFIC_LEAK_DETECTION() ((void)0)
+#define DISABLE_SPECIFIC_LEAK_DETECTION() ((void)0)
 #endif
 
 #define NULL_DATA_COLOR IM_COL32( 75,75,75,255 )
@@ -93,7 +93,7 @@ int HexEditor_ImGUI::InitWindow()
 		return -1;
 	}
 
-	glfwSwapInterval(1); //Put 0 in case you want to uncap the speed
+	glfwSwapInterval( 1 ); //Put 0 in case you want to uncap the speed
 	return 0;
 }
 
@@ -107,9 +107,9 @@ void HexEditor_ImGUI::InitImGUI()
 
 	// Setup scaling
 	ImGuiStyle& style = ImGui::GetStyle();
-	style.ScaleAllSizes( main_scale );        // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
-	style.FontScaleDpi = main_scale;        // Set initial font scale. (using io.ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
-
+	//style.ScaleAllSizes( main_scale );        // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
+	//style.FontScaleDpi = main_scale;        // Set initial font scale. (using io.ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
+	style.FontScaleDpi = 1.2f;
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOpenGL( m_pWindow,true );
 	ImGui_ImplOpenGL3_Init( "#version 330" );
@@ -211,17 +211,19 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 {
 	static int iBytesPerLine = 32;
 
-	float footer_height = 10.f;
 	ImGuiStyle& style = ImGui::GetStyle();
+	float footer_height = 25.f * style.FontScaleDpi;
 	const float height_separator = style.ItemSpacing.y;
 	footer_height += height_separator + ImGui::GetFrameHeightWithSpacing() * 1;
 
 	ImGui::BeginChild( "##scrolling",ImVec2( 0,-footer_height ),false,ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav );
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
-	
+
 	ImVec2 window_pos = ImGui::GetWindowPos();
-	float PosAsciiStart = 800;
-	draw_list->AddLine( ImVec2( window_pos.x + PosAsciiStart - 20 ,window_pos.y ),ImVec2( window_pos.x + PosAsciiStart - 20,window_pos.y + 9999 ),ImGui::GetColorU32( ImGuiCol_Border ) );
+	float fFontSize = ( ImGui::CalcTextSize( "FF" ).x + 1 );
+	float PosAsciiStart = 40.0f * style.FontScaleDpi + ( iBytesPerLine * fFontSize + ( ( iBytesPerLine * 20.0f * style.FontScaleDpi ) - iBytesPerLine * fFontSize ) ) + 10.5f * style.FontScaleDpi;
+	draw_list->AddLine( ImVec2( window_pos.x + PosAsciiStart,window_pos.y ),ImVec2( window_pos.x + PosAsciiStart,window_pos.y + 9999 ),ImGui::GetColorU32( ImGuiCol_Border ) );
+	PosAsciiStart += fFontSize;
 
 	const int line_total_count = ( oBuffer.GetSize() / iBytesPerLine );
 	ImGuiListClipper clipper;
@@ -234,16 +236,15 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 		for( int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++ )
 		{
 			ImGui::Text( "%04X:",iStartAdress + line_i * iBytesPerLine );
+			float fStartPos = 40.f;
 			for( int n = iStartIndex; n < iBytesPerLine + iStartIndex; ++n )
 			{
-				uint8_t* it = oBuffer.Get() + ( line_i * iBytesPerLine ) + n;
-				if( n == iBytesPerLine / 2 )
-				{
-					ImGui::SameLine();
-					ImGui::Text( " " );
-				}
+				float byte_pos_x = ( 20 * n + fStartPos ) * style.FontScaleDpi;
+				if( n + 1 == iBytesPerLine / 2 )
+					fStartPos += 10.5f;
+				ImGui::SameLine( byte_pos_x );
 
-				ImGui::SameLine();
+				uint8_t* it = oBuffer.Get() + ( line_i * iBytesPerLine ) + n;
 				if( ( *it ) == 0 )
 					ImGui::TextDisabled( "00" );
 				else
@@ -272,13 +273,13 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 	size_t base_display_addr = 0X0000;
 	const char* format_range = "Range " "%04X..%04X";
 	ImGui::Text( format_range,base_display_addr,base_display_addr + oBuffer.GetSize() );
-
+	ImGui::DragFloat( "UI Scale##DPI",&style.FontScaleDpi,0.05f,0.6f,2.0f, "%f");
 	//Dec
 	//Hex
 	//Binary
 }
 
-void HexEditor_ImGUI::Render( Buffer& oBuffer, bool& bQuit )
+void HexEditor_ImGUI::Render( Buffer& oBuffer,bool& bQuit )
 {
 	if( !glfwWindowShouldClose( m_pWindow ) )
 	{
@@ -319,7 +320,7 @@ void HexEditor_ImGUI::Quit()
 	m_pWindow = nullptr;
 }
 
-void HexEditor_ImGUI::framebuffer_size_callback( GLFWwindow* m_pWindow, int width, int height )
+void HexEditor_ImGUI::framebuffer_size_callback( GLFWwindow* m_pWindow,int width,int height )
 {
 	// make sure the viewport matches the new window dimensions; note that width and
 	// height will be significantly larger than specified on retina displays.
