@@ -8,7 +8,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "HexEditor.h"
-#include <vector>
 
 class HexEditor_ImGUI : public HexEditor
 {
@@ -26,9 +25,10 @@ class HexEditor_ImGUI : public HexEditor
 		void Quit();
 	private:
 		GLFWwindow*	m_pWindow;
-		static void framebuffer_size_callback( GLFWwindow* m_pWindow,int width,int height );
 
-		int m_iStartIndex;
+		static void framebuffer_size_callback( GLFWwindow* m_pWindow,int width,int height );
+		uint16_t	m_iAdressSelected;
+		int			m_iStartIndex;
 };
 
 
