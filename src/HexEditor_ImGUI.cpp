@@ -44,8 +44,8 @@ static void glfw_error_callback( int error,const char* description )
 HexEditor_ImGUI::HexEditor_ImGUI()
 	: m_pWindow( nullptr )
 	, m_iStartIndex( -1 )
+	,m_iAdressSelected( -1 )
 {
-
 }
 
 HexEditor_ImGUI::~HexEditor_ImGUI()
@@ -103,13 +103,13 @@ void HexEditor_ImGUI::InitImGUI()
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGui::StyleColorsClassic();
+	ImGui::StyleColorsLight();
 
 	// Setup scaling
 	ImGuiStyle& style = ImGui::GetStyle();
 	//style.ScaleAllSizes( main_scale );        // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
 	//style.FontScaleDpi = main_scale;        // Set initial font scale. (using io.ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
-	style.FontScaleDpi = 1.2f;
+	style.FontScaleDpi = 2.0f;
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOpenGL( m_pWindow,true );
 	ImGui_ImplOpenGL3_Init( "#version 330" );
@@ -134,7 +134,65 @@ void HexEditor_ImGUI::Update( Buffer& oBuffer )
 	char titleBuffer[ 128 ];
 	std::snprintf( titleBuffer,sizeof( titleBuffer ),"Hex Editor (%.2f ms)###HexEditorWindow",iDurationMs );
 	if( ImGui::Begin( titleBuffer,nullptr ) )
+	{
+		if( ImGui::IsMouseClicked( 0 ) )
+		{
+			//Determine if the click is in the window and if it's on data
+			ImVec2 mouse_pos = ImGui::GetMousePos();
+			ImVec2 window_pos = ImGui::GetWindowPos();
+			ImVec2 window_size = ImGui::GetWindowSize();
+			if( mouse_pos.x >= window_pos.x && mouse_pos.x <= window_pos.x + window_size.x &&
+				mouse_pos.y >= window_pos.y && mouse_pos.y <= window_pos.y + window_size.y )
+			{
+				//Now check if the mouse is on data
+				ImGuiStyle& style = ImGui::GetStyle();
+				float fFontSize = ( ImGui::CalcTextSize( "FF" ).x + 1 );
+
+				float cellWidth = fFontSize + ( 3.5f * style.FontScaleDpi );
+				float cellWidthSpace = fFontSize + ( 15.f * style.FontScaleDpi );
+				float lineHeight = 15.0f * style.FontScaleDpi;
+
+				float gridStartX = window_pos.x + ImGui::CalcTextSize( "FFFFFFFF" ).x + 1.0f;
+				float gridStartY = window_pos.y;
+
+				float relativeX = mouse_pos.x - gridStartX;
+				float relativeY = mouse_pos.y - gridStartY;
+
+				if( relativeX >= 0 && relativeY >= 0 )
+				{
+					int hoveredCol = -1;
+					int hoveredLine = static_cast< int >( relativeY / lineHeight ) - 1;
+
+					int halfCols = 16;
+					float firstHalfWidth = halfCols * cellWidth;
+					float secondHalfStartX = gridStartX + 15 * cellWidth + cellWidthSpace;
+
+					if( relativeX < firstHalfWidth )
+					{
+						hoveredCol = static_cast< int >( relativeX / cellWidth );
+					}
+					else 
+					{
+						float relativeXSecond = mouse_pos.x - secondHalfStartX;
+						int secondHalfCol = static_cast< int >( relativeXSecond / cellWidth );
+						hoveredCol = halfCols + secondHalfCol;
+					}
+
+					if( hoveredCol != -1 )
+					{
+						uint16_t iAdress = 0;
+						if( hoveredLine > 0 )
+							iAdress = 32 * hoveredLine;
+						iAdress += hoveredCol;
+						m_iAdressSelected = iAdress;
+						std::cout << hoveredCol << std::endl;
+					}
+				}
+			}
+		}
+		
 		UpdateWithDrawList( oBuffer );
+	}
 	
 	ImGui::End();
 
@@ -197,9 +255,11 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 			{
 				uint8_t* it = oBuffer.Get() + ( line_i * iBytesPerLine ) + n;
 				ImGui::SameLine( n == 0 ? PosAsciiStart : 0 );
+
 				char display_c = ( ( *it ) < 32 || ( *it ) >= 128 ) ? '.' : ( *it );
 				draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_Text ), &display_c, &display_c + 1 );
-				pos.x += ( ImGui::CalcTextSize( "F" ).x + 2.5f ) * style.FontScaleDpi;
+
+				pos.x += ImGui::CalcTextSize( "F" ).x + ( 1.5f * style.FontScaleDpi );
 			}
 
 			pos.y += 15.0f * style.FontScaleDpi;
@@ -209,6 +269,33 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 
 	ImGui::EndChild();
 	ImGui::Separator();
+
+	if( m_iAdressSelected != -1 )
+	{
+		ImVec2 vStartPos = { window_pos.x, window_pos.y };
+		uint16_t iStartAdress = 0x0000;
+		iStartAdress += m_iAdressSelected; //Check adress limit
+		int line = m_iAdressSelected / iBytesPerLine;
+		int col = m_iAdressSelected % iBytesPerLine;
+		vStartPos.y += line * ( 15.0f * style.FontScaleDpi );
+		vStartPos.x += ImGui::CalcTextSize( "FFFFFFFF" ).x + 1;
+		if( col >= iBytesPerLine / 2 )
+			vStartPos.x += ( col - 1 ) * ( fFontSize + ( 3.5f * style.FontScaleDpi ) ) + ( fFontSize + ( 15.f * style.FontScaleDpi ) );
+		else
+			vStartPos.x += col * ( fFontSize + ( 3.5f * style.FontScaleDpi ) );
+
+		draw_list->AddRectFilled( vStartPos,ImVec2( vStartPos.x + ImGui::CalcTextSize( "FF" ).x + 1 ,vStartPos.y + ImGui::CalcTextSize( "FF" ).y + 1 ),ImGui::GetColorU32( ImGuiCol_DockingPreview ) );
+
+		float firstHalfWidth = 16 * ( fFontSize + ( 3.5f * style.FontScaleDpi ) );
+		float gridStartX = window_pos.x + ImGui::CalcTextSize( "FFFFFFFF" ).x + 1.0f;
+		float secondHalfStartX = gridStartX + firstHalfWidth;
+		draw_list->AddLine( ImVec2( secondHalfStartX,window_pos.y ),ImVec2( secondHalfStartX,window_pos.y + 9999 ),ImGui::GetColorU32( ImGuiCol_Border ) );
+
+		ImVec2 vAsciiPos;
+		vAsciiPos.x = window_pos.x + PosAsciiStart + ( col * ( ImGui::CalcTextSize( "F" ).x + ( 1.5f * style.FontScaleDpi ) ) );
+		vAsciiPos.y = vStartPos.y;
+		draw_list->AddRectFilled( vAsciiPos,ImVec2( vAsciiPos.x + ImGui::CalcTextSize("F").x + 1,vAsciiPos.y + ImGui::CalcTextSize("F").y + 1),ImGui::GetColorU32(ImGuiCol_DockingPreview));
+	}
 
 	ImGui::SetNextItemWidth( 10 * 7 + style.FramePadding.x * 2.0f );
 	if( ImGui::DragInt( "##cols",&iBytesPerLine,0.2f,4,32,"%d cols" ) ) { if( iBytesPerLine < 1 ) iBytesPerLine = 1; }
