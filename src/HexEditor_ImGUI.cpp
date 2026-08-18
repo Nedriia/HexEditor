@@ -76,7 +76,7 @@ int HexEditor_ImGUI::InitWindow()
 	glfwWindowHint( GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE );
 
 	DISABLE_SPECIFIC_LEAK_DETECTION();
-	m_pWindow = glfwCreateWindow( 3440,1440,"Hex Editor",nullptr,nullptr );
+	m_pWindow = glfwCreateWindow( 2140,980,"Hex Editor",nullptr,nullptr );
 	if( m_pWindow == nullptr )
 	{
 		std::cout << "DISPLAY::FAILED_TO_CREATE_GLFW_WINDOW" << std::endl;
@@ -105,7 +105,7 @@ void HexEditor_ImGUI::InitImGUI()
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGui::StyleColorsLight();
+	ImGui::StyleColorsClassic();
 
 	ImGuiStyle& style = ImGui::GetStyle();
 	//style.ScaleAllSizes( 2.0f );
@@ -116,7 +116,7 @@ void HexEditor_ImGUI::InitImGUI()
 	ImGui_ImplOpenGL3_Init( "#version 330" );
 }
 
-void HexEditor_ImGUI::VisualVariable::SetSizes( const float fDPI_Scale )
+void HexEditor_ImGUI::VisualVariable::SetSizes( const float fDPI_Scale,const float fItemSpacing )
 {
 	if( fDPIScale == fDPI_Scale )
 		return;
@@ -131,6 +131,8 @@ void HexEditor_ImGUI::VisualVariable::SetSizes( const float fDPI_Scale )
 	fHeightNewLine		= 15.0f * fDPI_Scale;
 	iHalfCol			= iBytesPerLine / 2.0f;
 	fDPIScale			= fDPI_Scale;
+	fTitleHeight		= ImGui::GetTextLineHeightWithSpacing();
+	fFooterHeight		= ( 25.f * fDPI_Scale ) + fItemSpacing + ImGui::GetFrameHeightWithSpacing() * 1;
 
 	fXPosStartASCII		= fFontAdress + ( iBytesPerLine * fSpaceHex ) + fMidSpaceHex;
 }
@@ -168,13 +170,9 @@ void HexEditor_ImGUI::Update( Buffer& oBuffer )
 void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 {
 	ImGuiStyle& style = ImGui::GetStyle();
-	m_oVisualVariable.SetSizes( style.FontScaleDpi );
+	m_oVisualVariable.SetSizes( style.FontScaleDpi,style.ItemSpacing.y );
 
-	float footer_height = 25.f * style.FontScaleDpi;
-	const float height_separator = style.ItemSpacing.y;
-	footer_height += height_separator + ImGui::GetFrameHeightWithSpacing() * 1;
-
-	ImGui::BeginChild( "##scrolling",ImVec2( 0,-footer_height ),false,ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav );
+	ImGui::BeginChild( "##scrolling",ImVec2( 0,-m_oVisualVariable.fFooterHeight ),false,ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav );
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
 	ImVec2 window_pos = ImGui::GetWindowPos();
@@ -234,8 +232,14 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 
 	DrawAddrSelected( draw_list, window_pos.x, window_pos.y );
 
-	ImGui::SetNextItemWidth( 10 * 7 + style.FramePadding.x * 2.0f );
-	if( ImGui::DragInt( "##cols",&m_oVisualVariable.iBytesPerLine,0.2f,4,32,"%d cols" ) ) { m_oVisualVariable.iHalfCol = m_oVisualVariable.iBytesPerLine / 2; if( m_oVisualVariable.iBytesPerLine < 1 ) m_oVisualVariable.iBytesPerLine = 1; }
+	ImGui::SetNextItemWidth( 25 * 7 + style.FramePadding.x * 2.0f );
+	if( ImGui::DragInt( "##cols",&m_oVisualVariable.iBytesPerLine,0.2f,4,32,"%d cols" ) ) 
+	{ 
+		m_oVisualVariable.iHalfCol = m_oVisualVariable.iBytesPerLine / 2;
+		m_oVisualVariable.fXPosStartASCII = m_oVisualVariable.fFontAdress + ( m_oVisualVariable.iBytesPerLine * m_oVisualVariable.fSpaceHex ) + m_oVisualVariable.fMidSpaceHex;
+		if( m_oVisualVariable.iBytesPerLine < 1 )
+			m_oVisualVariable.iBytesPerLine = 1;
+	}
 	ImGui::SameLine();
 	size_t base_display_addr = 0X0000;
 	const char* format_range = "Range " "%04X..%04X";
@@ -297,11 +301,11 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 		ImVec2 window_size = ImGui::GetWindowSize();
 
 		if( mouse_pos.x >= window_pos.x && mouse_pos.x <= window_pos.x + window_size.x &&
-			mouse_pos.y >= window_pos.y && mouse_pos.y <= window_pos.y + window_size.y )
+			mouse_pos.y >= window_pos.y + m_oVisualVariable.fTitleHeight && mouse_pos.y <= window_pos.y + window_size.y - m_oVisualVariable.fFooterHeight - m_oVisualVariable.fTitleHeight * 0.5f )
 		{
 			//Now check if the mouse is on data
 			float gridStartX = window_pos.x + m_oVisualVariable.fFontAdress;
-			float gridStartY = window_pos.y;
+			float gridStartY = window_pos.y + m_oVisualVariable.fTitleHeight;
 
 			float relativeX = mouse_pos.x - gridStartX;
 			float relativeY = mouse_pos.y - gridStartY;
@@ -309,16 +313,16 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 			if( relativeX >= 0 && relativeY >= 0 )
 			{
 				int hoveredCol = -1;
-				int hoveredLine = static_cast< int >( relativeY / m_oVisualVariable.fHeightNewLine ) - 1;
+				int hoveredLine = static_cast< int >( relativeY / m_oVisualVariable.fHeightNewLine );
 
 				float firstHalfWidth = m_oVisualVariable.iHalfCol * m_oVisualVariable.fSpaceHex;
-				float secondHalfStartX = gridStartX + firstHalfWidth + m_oVisualVariable.fMidSpaceHex;
+				float secondHalfStartX = gridStartX + ( ( m_oVisualVariable.iHalfCol - 1 ) * m_oVisualVariable.fSpaceHex ) + m_oVisualVariable.fMidSpaceHex;
 
 				if( relativeX < firstHalfWidth )
 				{
 					hoveredCol = static_cast< int >( relativeX / m_oVisualVariable.fSpaceHex );
 				}
-				else
+				else if( relativeX < firstHalfWidth + secondHalfStartX - m_oVisualVariable.fFontAdress )
 				{
 					float relativeXSecond = mouse_pos.x - secondHalfStartX;
 					int secondHalfCol = static_cast< int >( relativeXSecond / m_oVisualVariable.fSpaceHex );
@@ -354,7 +358,7 @@ void HexEditor_ImGUI::DrawAddrSelected( ImDrawList* draw_list, const float fWind
 		vStartPos.x += m_oVisualVariable.fFontAdress;
 
 		if( col >= m_oVisualVariable.iHalfCol )
-			vStartPos.x += col * m_oVisualVariable.fSpaceHex + m_oVisualVariable.fMidSpaceHex;
+			vStartPos.x += ( ( m_oVisualVariable.iHalfCol - 1 ) * m_oVisualVariable.fSpaceHex + m_oVisualVariable.fMidSpaceHex ) + ( ( col - m_oVisualVariable.iHalfCol ) * m_oVisualVariable.fSpaceHex );
 		else
 			vStartPos.x += col * m_oVisualVariable.fSpaceHex;
 
