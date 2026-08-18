@@ -35,7 +35,7 @@ class HexEditor_ImGUI : public HexEditor
 
 		typedef struct
 		{
-			void SetSizes( const float fDPI_Scale );
+			void SetSizes( const float fDPI_Scale, const float fItemSpacing );
 
 			float fFontChar = 0.0f;
 			float fFontHex = 0.0f;
@@ -49,6 +49,8 @@ class HexEditor_ImGUI : public HexEditor
 			float fHeightNewLine = 0.0f;
 			int   iHalfCol = 0;
 			float fDPIScale = 0.f;
+			float fTitleHeight = 0.f;
+			float fFooterHeight = 0.f;
 		}VisualVariable;
 		VisualVariable m_oVisualVariable;
 };
