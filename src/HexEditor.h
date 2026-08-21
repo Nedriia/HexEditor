@@ -41,7 +41,7 @@ class HexEditor
 			float		fFontHeight = 0.0f;
 			float		fFontAdress = 0.0f;
 			float		fXPosStartASCII = 0.0f;
-			static int	iBytesPerLine;
+			int			iBytesPerLine = 32;
 			float		fSpaceHex = 0.0f;
 			float		fMidSpaceHex = 0.0f;
 			float		fSpaceASCII = 0.0f;

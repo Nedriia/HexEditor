@@ -36,8 +36,6 @@
 #define CHANGE_DATA_COLOR IM_COL32( 255,0,0,255 )
 #define DEFAULT_DATA_COLOR IM_COL32( 255,255,255,180 )
 
-int HexEditor_ImGUI::VisualVariable::iBytesPerLine = 32;
-
 static void glfw_error_callback( int error,const char* description )
 {
 	fprintf( stderr,"GLFW Error %d: %s\n",error,description );
