@@ -72,7 +72,7 @@ void HexEditor::CleanMemory()
 {
 	for( int i = 0; i < m_oVisualVariable.m_iSize; ++i )
 	{
-		for( int k = 0; k < m_oVisualVariable.iBytesPerLine; ++k )
+		for( int k = 0; k < 32; ++k )
 		{
 			delete[] m_oDataFormat[ i ].m_aHexData[ k ];
 			m_oDataFormat[ i ].m_aHexData[ k ] = nullptr;

@@ -28,7 +28,7 @@ class HexEditor
 		struct MemoryDataFormatted
 		{
 			const char*		m_aAdress;
-			const char*		m_aHexData[ 32 ];
+			const char*		m_aHexData[ 32 ] { nullptr };
 		};
 		MemoryDataFormatted m_oDataFormat[ 256 ];
 

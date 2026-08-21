@@ -100,11 +100,11 @@ void HexEditor_ImGUI::InitImGUI()
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGui::StyleColorsClassic();
+	ImGui::StyleColorsLight();
 
 	ImGuiStyle& style = ImGui::GetStyle();
 	//style.ScaleAllSizes( 2.0f );
-	style.FontScaleDpi = 2.0f;
+	style.FontScaleDpi = 1.5f;
 
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOpenGL( m_pWindow,true );
@@ -231,13 +231,24 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 		m_oVisualVariable.fXPosStartASCII = m_oVisualVariable.fFontAdress + ( m_oVisualVariable.iBytesPerLine * m_oVisualVariable.fSpaceHex ) + m_oVisualVariable.fMidSpaceHex;
 		if( m_oVisualVariable.iBytesPerLine < 1 )
 			m_oVisualVariable.iBytesPerLine = 1;
+
+		CleanMemory();
+		FillDataToProcess( oBuffer,clipper.DisplayStart,clipper.DisplayEnd );
 	}
 	ImGui::SameLine();
 	size_t base_display_addr = 0X0000;
 	const char* format_range = "Range " "%04X..%04X";
 	ImGui::Text( format_range,base_display_addr,base_display_addr + oBuffer.GetSize() );
 	ImGui::SameLine();
-	ImGui::DragScalar( "##",ImGuiDataType_U16,&m_iAdressSelected,0.2f,( void* )4,( void *)32, "%04X", ImGuiSliderFlags_ReadOnly );
+	if( ImGui::DragScalar( "##",ImGuiDataType_U16,&m_iAdressSelected,0.2f,NULL,NULL,"%04X" ) )
+	{
+		if( m_iAdressSelected >= 0 && m_iAdressSelected < 0XFFFF )
+		{
+			ImGui::BeginChild( "##scrolling" );
+			ImGui::SetScrollFromPosY( ImGui::GetCursorStartPos().y + ( m_iAdressSelected / m_oVisualVariable.iBytesPerLine ) );
+			ImGui::EndChild();
+		}
+	}
 
 	ImGui::DragFloat( "UI Scale##DPI",&style.FontScaleDpi,0.05f,0.6f,2.0f, "%f");
 	ImGui::PopItemWidth();
