@@ -123,7 +123,7 @@ void HexEditor_ImGUI::VisualVariable::SetSizes( const float fDPI_Scale,const flo
 
 	fFontChar			= ImGui::CalcTextSize( "F" ).x + 1.0f;
 	fFontHex			= ImGui::CalcTextSize( "FF" ).x + 1.0f;
-	fFontHeight			= ImGui::GetFrameHeightWithSpacing();
+	fFontHeight			= ImGui::CalcTextSize( "F" ).y + 1.0f;
 	fFontAdress			= ImGui::CalcTextSize( "FFFFFFFF" ).x + 1.0f;
 	fSpaceHex			= fFontHex + ( 3.5f * fDPI_Scale );
 	fMidSpaceHex		= fFontHex + ( 15.0f * fDPI_Scale );
@@ -185,23 +185,24 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 
 	while( clipper.Step() )
 	{
-		uint16_t iStartAdress = 0;
-		int iStartIndex = 0;
-		for( int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++ )
+		uint16_t iStartAdress = 0; //??
+
+		if( m_oDataFormat->m_iStart != clipper.DisplayStart || m_oDataFormat->m_iSize != ( clipper.DisplayEnd - clipper.DisplayStart ) )
+			FillDataToProcess( oBuffer, clipper.DisplayStart, clipper.DisplayEnd );
+
+		for( int line_i = 0; line_i < m_oDataFormat->m_iSize; line_i++ )
 		{
-			char aBuffer[24];
-			snprintf( aBuffer, sizeof( aBuffer), "0X%04X:",iStartAdress + line_i * m_oVisualVariable.iBytesPerLine );
-			draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_TabHovered ),aBuffer );
+			//char aBuffer[24];
+			//snprintf( aBuffer, sizeof( aBuffer), "0X%04X:",iStartAdress + line_i * m_oVisualVariable.iBytesPerLine );
+			draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_TabHovered ), m_oDataFormat[line_i].m_aAdress );
 			pos.x += ImGui::CalcTextSize( "FFFFFFFF" ).x + 1;
 
-			for( int n = iStartIndex; n < m_oVisualVariable.iBytesPerLine + iStartIndex; ++n )
+			for( int n = 0; n < m_oVisualVariable.iBytesPerLine; ++n )
 			{
-				uint8_t* it = oBuffer.Get() + ( line_i * m_oVisualVariable.iBytesPerLine ) + n;
-				snprintf( aBuffer,sizeof( aBuffer ),"%02X",( *it ) );
-				if( ( *it ) == 0 )
-					draw_list->AddText( pos,ImGui::ColorConvertFloat4ToU32( ImVec4( 0.40f,0.40f,0.40f,1.00f ) ),aBuffer );
+				if( ( *( oBuffer.Get() + ( line_i * m_oVisualVariable.iBytesPerLine ) + n ) ) == 0 )
+					draw_list->AddText( pos,ImGui::ColorConvertFloat4ToU32( ImVec4( 0.40f,0.40f,0.40f,1.00f ) ),"00" );
 				else
-					draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_Text ),aBuffer );
+					draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_Text ),m_oDataFormat[ line_i ].m_aHexData[ n ] );
 
 				if( n + 1 == m_oVisualVariable.iHalfCol )
 					pos.x += m_oVisualVariable.fMidSpaceHex;

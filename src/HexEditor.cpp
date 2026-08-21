@@ -12,6 +12,7 @@
 
 HexEditor::~HexEditor()
 {
+	CleanMemory();
 }
 
 std::string HexEditor::FormatDebug( const char* sFormat,... )
@@ -29,18 +30,6 @@ std::string HexEditor::FormatDebug( const char* sFormat,... )
 	return &vec[ 0 ];
 }
 
-void HexEditor::FormatData( Buffer& oBuffer,int iStartIndex,int iEndIndex,int iBytesPerLine )
-{
-	//TODO : Should add offset outside of viewport
-	for( int i = iStartIndex; i < iEndIndex; ++i )
-	{
-		uint8_t iIndex = i - iStartIndex;
-		memcpy( m_oDataFormat[i].m_aHexData,oBuffer.Get() + ( i * iBytesPerLine ),iBytesPerLine);
-
-		m_oDataFormat[ i ].m_aAdress = i * iBytesPerLine + iStartIndex;
-	}
-}
-
 void HexEditor::DisplayDebugText( const Buffer& oBuffer )
 {
 	std::ostringstream oss;
@@ -48,7 +37,43 @@ void HexEditor::DisplayDebugText( const Buffer& oBuffer )
 	{
 		if( i % 16 == 0 )
 			oss << ( i != 0 ? "\n" : "" ) << FormatDebug( "%06x ",i );
-		oss << FormatDebug( "%02X ", oBuffer.ReadAtAdress( i ) );
+		oss << FormatDebug( "%02X ",oBuffer.ReadAtAdress( i ) );
 	}
 	std::cout << oss.str() << std::endl;
+}
+
+void HexEditor::FillDataToProcess( Buffer& oDataBuffer,int iStart,int iEnd )
+{
+	CleanMemory();
+
+	for( int i = iStart; i < iEnd; ++i )
+	{
+		char* aBuffer = new char[ 8 ];
+		uint16_t iAdress = i * m_oVisualVariable.iBytesPerLine;
+		uint8_t* value = oDataBuffer.Get() + ( iAdress );
+
+		snprintf( aBuffer, sizeof( aBuffer ), "0X%04X:", iAdress );
+		m_oDataFormat[ i ].m_aAdress = aBuffer;
+
+		for( int k = 0; k < m_oVisualVariable.iBytesPerLine; ++k )
+		{
+			aBuffer = new char[ 8 ];
+			uint8_t* data = value + k;
+
+			snprintf( aBuffer,sizeof( aBuffer ),"%02X",( *data ) );
+			m_oDataFormat[ i ].m_aHexData[ k ] = aBuffer;
+		}
+	}
+	m_oDataFormat->m_iStart = iStart;
+	m_oDataFormat->m_iSize = iEnd - iStart;
+}
+
+void HexEditor::CleanMemory()
+{
+	for( int i = 0; i < m_oDataFormat->m_iSize; ++i )
+	{
+		for( int k = 0; k < m_oVisualVariable.iBytesPerLine; ++k )
+			delete[] m_oDataFormat[i].m_aHexData[k];
+		delete[] m_oDataFormat[ i ].m_aAdress;
+	}
 }
