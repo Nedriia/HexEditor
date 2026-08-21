@@ -237,7 +237,7 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 	const char* format_range = "Range " "%04X..%04X";
 	ImGui::Text( format_range,base_display_addr,base_display_addr + oBuffer.GetSize() );
 	ImGui::SameLine();
-	ImGui::DragScalar( "##",ImGuiDataType_U16,&m_iAdressSelected,0.2f,( void* )4,( void *)32, "%04X" );
+	ImGui::DragScalar( "##",ImGuiDataType_U16,&m_iAdressSelected,0.2f,( void* )4,( void *)32, "%04X", ImGuiSliderFlags_ReadOnly );
 
 	ImGui::DragFloat( "UI Scale##DPI",&style.FontScaleDpi,0.05f,0.6f,2.0f, "%f");
 	ImGui::PopItemWidth();
