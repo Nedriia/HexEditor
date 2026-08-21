@@ -224,8 +224,7 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 	ImGui::Separator();
 
 	DrawAddrSelected( draw_list, window_pos.x, window_pos.y );
-
-	ImGui::SetNextItemWidth( 25 * 7 + style.FramePadding.x * 2.0f );
+	ImGui::PushItemWidth( ( 12 * m_oVisualVariable.fDPIScale ) * 7 + style.FramePadding.x * 2.0f );
 	if( ImGui::DragInt( "##cols",&m_oVisualVariable.iBytesPerLine,0.2f,4,32,"%d cols" ) ) 
 	{ 
 		m_oVisualVariable.iHalfCol = m_oVisualVariable.iBytesPerLine / 2;
@@ -237,7 +236,11 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 	size_t base_display_addr = 0X0000;
 	const char* format_range = "Range " "%04X..%04X";
 	ImGui::Text( format_range,base_display_addr,base_display_addr + oBuffer.GetSize() );
+	ImGui::SameLine();
+	ImGui::DragScalar( "##",ImGuiDataType_U16,&m_iAdressSelected,0.2f,( void* )4,( void *)32, "%04X" );
+
 	ImGui::DragFloat( "UI Scale##DPI",&style.FontScaleDpi,0.05f,0.6f,2.0f, "%f");
+	ImGui::PopItemWidth();
 	//Dec
 	//Hex
 	//Binary
