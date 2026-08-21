@@ -23,8 +23,8 @@ class HexEditor
 		std::string FormatDebug( const char* sFormat,... );
 
 		void DisplayDebugText( const Buffer& oBuffer );
-
 		void FillDataToProcess( Buffer& oBuffer,int iStart,int iEnd );
+
 		struct MemoryDataFormatted
 		{
 			const char*		m_aAdress;
@@ -50,8 +50,13 @@ class HexEditor
 			float		fDPIScale = 0.f;
 			float		fTitleHeight = 0.f;
 			float		fFooterHeight = 0.f;
+			float		fFooterHeightExtend = 0.f;
 			int			m_iSize = 0;
 			int			m_iStart = 0;
+
+			bool		OptShowDataPreview = false;
+			bool		OptShowAscii = true;
+			bool		OptGreyOutZeroes = true;
 		};
 		VisualVariable m_oVisualVariable;
 		void CleanMemory();

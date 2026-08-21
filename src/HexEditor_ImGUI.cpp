@@ -128,6 +128,7 @@ void HexEditor_ImGUI::VisualVariable::SetSizes( const float fDPI_Scale,const flo
 	fDPIScale			= fDPI_Scale;
 	fTitleHeight		= ImGui::GetTextLineHeightWithSpacing();
 	fFooterHeight		= ( 25.f * fDPI_Scale ) + fItemSpacing + ImGui::GetFrameHeightWithSpacing() * 1;
+	fFooterHeightExtend = ( 75.f * fDPI_Scale ) + fItemSpacing + ImGui::GetFrameHeightWithSpacing() * 1;
 
 	fXPosStartASCII		= fFontAdress + ( iBytesPerLine * fSpaceHex ) + fMidSpaceHex;
 }
@@ -154,6 +155,7 @@ void HexEditor_ImGUI::Update( Buffer& oBuffer )
 	{
 		SelectAddrToEdit();
 		UpdateWithDrawList( oBuffer );
+		DrawOptions();
 	}
 	
 	ImGui::End();
@@ -167,7 +169,7 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 	ImGuiStyle& style = ImGui::GetStyle();
 	m_oVisualVariable.SetSizes( style.FontScaleDpi,style.ItemSpacing.y );
 
-	ImGui::BeginChild( "##scrolling",ImVec2( 0,-m_oVisualVariable.fFooterHeight ),false,ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav );
+	ImGui::BeginChild( "##scrolling",ImVec2( 0,m_oVisualVariable.OptShowDataPreview ? -m_oVisualVariable.fFooterHeightExtend : -m_oVisualVariable.fFooterHeight ),false,ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav );
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
 	ImVec2 window_pos = ImGui::GetWindowPos();
@@ -191,7 +193,7 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 
 			for( int n = 0; n < m_oVisualVariable.iBytesPerLine; ++n )
 			{
-				if( ( *( oBuffer.Get() + ( line_i * m_oVisualVariable.iBytesPerLine ) + n ) ) == 0 )
+				if( m_oVisualVariable.OptGreyOutZeroes && ( *( oBuffer.Get() + ( line_i * m_oVisualVariable.iBytesPerLine ) + n ) ) == 0 )
 					draw_list->AddText( pos,ImGui::ColorConvertFloat4ToU32( ImVec4( 0.40f,0.40f,0.40f,1.00f ) ),"00" );
 				else
 					draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_Text ),m_oDataFormat[ iIndexData ].m_aHexData[ n ] );
@@ -203,16 +205,19 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 			}
 			pos.x = window_pos.x + m_oVisualVariable.fXPosStartASCII + m_oVisualVariable.fFontHex;
 
-			//ASCII
-			for( int n = 0; n < m_oVisualVariable.iBytesPerLine; ++n )
+			if( m_oVisualVariable.OptShowAscii )
 			{
-				uint8_t* it = oBuffer.Get() + ( line_i * m_oVisualVariable.iBytesPerLine ) + n;
-				ImGui::SameLine( n == 0 ? m_oVisualVariable.fSpaceASCII : 0 );
+				//ASCII
+				for( int n = 0; n < m_oVisualVariable.iBytesPerLine; ++n )
+				{
+					uint8_t* it = oBuffer.Get() + ( line_i * m_oVisualVariable.iBytesPerLine ) + n;
+					ImGui::SameLine( n == 0 ? m_oVisualVariable.fSpaceASCII : 0 );
 
-				char display_c = ( ( *it ) < 32 || ( *it ) >= 128 ) ? '.' : ( *it );
-				draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_Text ), &display_c, &display_c + 1 );
+					char display_c = ( ( *it ) < 32 || ( *it ) >= 128 ) ? '.' : ( *it );
+					draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_Text ),&display_c,&display_c + 1 );
 
-				pos.x += m_oVisualVariable.fSpaceASCII;
+					pos.x += m_oVisualVariable.fSpaceASCII;
+				}
 			}
 
 			pos.y += m_oVisualVariable.fHeightNewLine;
@@ -252,9 +257,22 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 
 	ImGui::DragFloat( "UI Scale##DPI",&style.FontScaleDpi,0.05f,0.6f,2.0f, "%f");
 	ImGui::PopItemWidth();
-	//Dec
-	//Hex
-	//Binary
+
+	if( m_oVisualVariable.OptShowDataPreview && m_iAdressSelected != 0xFFFF )
+	{
+		ImGui::Separator();
+		char aBuffer[24];
+		auto value = *( oBuffer.Get() + m_iAdressSelected );
+		std::snprintf( aBuffer,sizeof( aBuffer ),"DEC %i",value );
+
+		ImGui::Text( aBuffer );
+
+		std::snprintf( aBuffer,sizeof( aBuffer ),"HEX %02X",value );
+		ImGui::Text( aBuffer );
+
+		itoa( value,aBuffer,2 );
+		ImGui::Text( "Binary %s", aBuffer);
+	}
 }
 
 void HexEditor_ImGUI::Render( Buffer& oBuffer,bool& bQuit )
@@ -350,6 +368,9 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 			}
 		}
 	}
+
+	if( ImGui::IsMouseClicked( 1 ) )
+		ImGui::OpenPopup( "context" );
 }
 
 void HexEditor_ImGUI::DrawAddrSelected( ImDrawList* draw_list, const float fWindowPosX,const float fWindowPosY )
@@ -375,10 +396,25 @@ void HexEditor_ImGUI::DrawAddrSelected( ImDrawList* draw_list, const float fWind
 
 		draw_list->AddRectFilled( vStartPos,ImVec2( vStartPos.x + m_oVisualVariable.fFontHex,vStartPos.y + m_oVisualVariable.fFontHeight ),ImGui::GetColorU32( ImGuiCol_DockingPreview ) );
 
+		if( !m_oVisualVariable.OptShowAscii )
+			return;
+
 		ImVec2 vAsciiPos;
 		vAsciiPos.x = fWindowPosX + m_oVisualVariable.fXPosStartASCII + m_oVisualVariable.fFontHex + ( col * m_oVisualVariable.fSpaceASCII );
 		vAsciiPos.y = vStartPos.y;
 		draw_list->AddRectFilled( vAsciiPos,ImVec2( vAsciiPos.x + m_oVisualVariable.fFontChar,vAsciiPos.y + m_oVisualVariable.fFontHeight ),ImGui::GetColorU32( ImGuiCol_DockingPreview ) );
+	}
+}
+
+void HexEditor_ImGUI::DrawOptions()
+{
+	if( ImGui::BeginPopup( "context" ) )
+	{
+		ImGui::Checkbox( "Show Data Preview",&m_oVisualVariable.OptShowDataPreview );
+		ImGui::Checkbox( "Show Ascii",&m_oVisualVariable.OptShowAscii );
+		ImGui::Checkbox( "Grey out zeroes",&m_oVisualVariable.OptGreyOutZeroes );
+
+		ImGui::EndPopup();
 	}
 }
 

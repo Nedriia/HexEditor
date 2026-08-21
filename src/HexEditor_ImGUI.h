@@ -29,6 +29,7 @@ class HexEditor_ImGUI : public HexEditor
 
 		void SelectAddrToEdit();
 		void DrawAddrSelected( ImDrawList* draw_list, const float fWindowPosX,const float fWindowPosY );
+		void DrawOptions();
 		static void framebuffer_size_callback(  GLFWwindow* m_pWindow,int width,int height );
 		uint16_t	m_iAdressSelected;
 };
