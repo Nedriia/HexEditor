@@ -32,7 +32,7 @@ class HexEditor
 		};
 		MemoryDataFormatted m_oDataFormat[ 256 ];
 
-		typedef struct 
+		struct VisualVariable
 		{
 			void SetSizes( const float fDPI_Scale,const float fItemSpacing );
 
@@ -52,7 +52,7 @@ class HexEditor
 			float		fFooterHeight = 0.f;
 			int			m_iSize = 0;
 			int			m_iStart = 0;
-		}VisualVariable;
+		};
 		VisualVariable m_oVisualVariable;
 		void CleanMemory();
 };
