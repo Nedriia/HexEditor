@@ -53,7 +53,7 @@ void HexEditor::FillDataToProcess( Buffer& oDataBuffer,int iStart,int iEnd )
 		uint8_t* value = oDataBuffer.Get() + ( iAdress );
 
 		snprintf( aBuffer, sizeof( aBuffer ), "0X%04X:", iAdress );
-		m_oDataFormat[ i ].m_aAdress = aBuffer;
+		m_oDataFormat[ i - iStart ].m_aAdress = aBuffer;
 
 		for( int k = 0; k < m_oVisualVariable.iBytesPerLine; ++k )
 		{
@@ -61,7 +61,7 @@ void HexEditor::FillDataToProcess( Buffer& oDataBuffer,int iStart,int iEnd )
 			uint8_t* data = value + k;
 
 			snprintf( aBuffer,sizeof( aBuffer ),"%02X",( *data ) );
-			m_oDataFormat[ i ].m_aHexData[ k ] = aBuffer;
+			m_oDataFormat[ i - iStart ].m_aHexData[ k ] = aBuffer;
 		}
 	}
 	m_oDataFormat->m_iStart = iStart;
@@ -70,10 +70,17 @@ void HexEditor::FillDataToProcess( Buffer& oDataBuffer,int iStart,int iEnd )
 
 void HexEditor::CleanMemory()
 {
-	for( int i = 0; i < m_oDataFormat->m_iSize; ++i )
+	int iSize = m_oDataFormat->m_iSize;
+	for( int i = 0; i < iSize; ++i )
 	{
 		for( int k = 0; k < m_oVisualVariable.iBytesPerLine; ++k )
-			delete[] m_oDataFormat[i].m_aHexData[k];
+		{
+			delete[] m_oDataFormat[ i ].m_aHexData[ k ];
+			m_oDataFormat[ i ].m_aHexData[ k ] = nullptr;
+		}
 		delete[] m_oDataFormat[ i ].m_aAdress;
+		m_oDataFormat[ i ].m_aAdress = nullptr;
+		m_oDataFormat[ i ].m_iSize = 0;
+		m_oDataFormat[ i ].m_iStart = 0;
 	}
 }

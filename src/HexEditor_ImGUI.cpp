@@ -192,8 +192,6 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 
 		for( int line_i = 0; line_i < m_oDataFormat->m_iSize; line_i++ )
 		{
-			//char aBuffer[24];
-			//snprintf( aBuffer, sizeof( aBuffer), "0X%04X:",iStartAdress + line_i * m_oVisualVariable.iBytesPerLine );
 			draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_TabHovered ), m_oDataFormat[line_i].m_aAdress );
 			pos.x += ImGui::CalcTextSize( "FFFFFFFF" ).x + 1;
 
