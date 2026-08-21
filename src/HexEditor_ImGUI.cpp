@@ -187,12 +187,13 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 	{
 		uint16_t iStartAdress = 0; //??
 
-		if( m_oDataFormat->m_iStart != clipper.DisplayStart || m_oDataFormat->m_iSize != ( clipper.DisplayEnd - clipper.DisplayStart ) )
+		if( m_oVisualVariable.m_iStart != clipper.DisplayStart || m_oVisualVariable.m_iSize != ( clipper.DisplayEnd - clipper.DisplayStart ) )
 			FillDataToProcess( oBuffer, clipper.DisplayStart, clipper.DisplayEnd );
 
-		for( int line_i = 0; line_i < m_oDataFormat->m_iSize; line_i++ )
+		for( int line_i = m_oVisualVariable.m_iStart; line_i < m_oVisualVariable.m_iStart + m_oVisualVariable.m_iSize; line_i++ )
 		{
-			draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_TabHovered ), m_oDataFormat[line_i].m_aAdress );
+			int iIndexData = line_i - m_oVisualVariable.m_iStart;
+			draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_TabHovered ), m_oDataFormat[ iIndexData ].m_aAdress );
 			pos.x += ImGui::CalcTextSize( "FFFFFFFF" ).x + 1;
 
 			for( int n = 0; n < m_oVisualVariable.iBytesPerLine; ++n )
@@ -200,7 +201,7 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 				if( ( *( oBuffer.Get() + ( line_i * m_oVisualVariable.iBytesPerLine ) + n ) ) == 0 )
 					draw_list->AddText( pos,ImGui::ColorConvertFloat4ToU32( ImVec4( 0.40f,0.40f,0.40f,1.00f ) ),"00" );
 				else
-					draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_Text ),m_oDataFormat[ line_i ].m_aHexData[ n ] );
+					draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_Text ),m_oDataFormat[ iIndexData ].m_aHexData[ n ] );
 
 				if( n + 1 == m_oVisualVariable.iHalfCol )
 					pos.x += m_oVisualVariable.fMidSpaceHex;
@@ -331,8 +332,10 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 				if( hoveredCol != -1 )
 				{
 					uint16_t iAdress = 0;
+					
 					if( hoveredLine > 0 )
 						iAdress = 32 * hoveredLine;
+					iAdress = ( m_oVisualVariable.m_iStart * m_oVisualVariable.iBytesPerLine ) + iAdress;
 					iAdress += hoveredCol;
 					m_iAdressSelected = iAdress;
 					std::cout << hoveredCol << std::endl;
@@ -346,13 +349,15 @@ void HexEditor_ImGUI::DrawAddrSelected( ImDrawList* draw_list, const float fWind
 {
 	if( m_iAdressSelected != -1 )
 	{
-		ImVec2 vStartPos = { fWindowPosX, fWindowPosY };
-		uint16_t iStartAdress = 0x0000;
-		iStartAdress += m_iAdressSelected; //Check adress limit
-
+		//Check if current Addr selected is in current viewport
 		int line = m_iAdressSelected / m_oVisualVariable.iBytesPerLine;
+		if( line < m_oVisualVariable.m_iStart || line > ( m_oVisualVariable.m_iStart + m_oVisualVariable.m_iSize ) )
+			return;
+
+		line = ( m_iAdressSelected - ( m_oVisualVariable.m_iStart * m_oVisualVariable.iBytesPerLine ) ) / m_oVisualVariable.iBytesPerLine;
 		int col = m_iAdressSelected % m_oVisualVariable.iBytesPerLine;
 
+		ImVec2 vStartPos = { fWindowPosX, fWindowPosY };
 		vStartPos.y += line * m_oVisualVariable.fHeightNewLine;
 		vStartPos.x += m_oVisualVariable.fFontAdress;
 

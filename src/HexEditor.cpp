@@ -64,14 +64,13 @@ void HexEditor::FillDataToProcess( Buffer& oDataBuffer,int iStart,int iEnd )
 			m_oDataFormat[ i - iStart ].m_aHexData[ k ] = aBuffer;
 		}
 	}
-	m_oDataFormat->m_iStart = iStart;
-	m_oDataFormat->m_iSize = iEnd - iStart;
+	m_oVisualVariable.m_iSize = iEnd - iStart;
+	m_oVisualVariable.m_iStart = iStart;
 }
 
 void HexEditor::CleanMemory()
 {
-	int iSize = m_oDataFormat->m_iSize;
-	for( int i = 0; i < iSize; ++i )
+	for( int i = 0; i < m_oVisualVariable.m_iSize; ++i )
 	{
 		for( int k = 0; k < m_oVisualVariable.iBytesPerLine; ++k )
 		{
@@ -80,7 +79,7 @@ void HexEditor::CleanMemory()
 		}
 		delete[] m_oDataFormat[ i ].m_aAdress;
 		m_oDataFormat[ i ].m_aAdress = nullptr;
-		m_oDataFormat[ i ].m_iSize = 0;
-		m_oDataFormat[ i ].m_iStart = 0;
 	}
+	m_oVisualVariable.m_iSize = 0;
+	m_oVisualVariable.m_iStart = 0;
 }
