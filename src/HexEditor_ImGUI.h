@@ -9,7 +9,7 @@
 #include <GLFW/glfw3.h>
 #include "HexEditor.h"
 
-class ImDrawList;
+struct ImDrawList;
 class HexEditor_ImGUI : public HexEditor
 {
 	public:
@@ -31,7 +31,6 @@ class HexEditor_ImGUI : public HexEditor
 		void DrawAddrSelected( ImDrawList* draw_list, const float fWindowPosX,const float fWindowPosY );
 		static void framebuffer_size_callback(  GLFWwindow* m_pWindow,int width,int height );
 		uint16_t	m_iAdressSelected;
-		int			m_iStartIndex;
 };
 
 

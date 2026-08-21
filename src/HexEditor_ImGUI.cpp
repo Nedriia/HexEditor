@@ -45,8 +45,7 @@ static void glfw_error_callback( int error,const char* description )
 
 HexEditor_ImGUI::HexEditor_ImGUI()
 	: m_pWindow( nullptr )
-	, m_iStartIndex( -1 )
-	,m_iAdressSelected( -1 )
+	,m_iAdressSelected( UINT16_MAX )
 {
 }
 
@@ -101,8 +100,6 @@ int HexEditor_ImGUI::InitWindow()
 
 void HexEditor_ImGUI::InitImGUI()
 {
-	float main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor( glfwGetPrimaryMonitor() ); // Valid on GLFW 3.3+ only
-
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGui::StyleColorsClassic();
@@ -185,8 +182,6 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 
 	while( clipper.Step() )
 	{
-		uint16_t iStartAdress = 0; //??
-
 		if( m_oVisualVariable.m_iStart != clipper.DisplayStart || m_oVisualVariable.m_iSize != ( clipper.DisplayEnd - clipper.DisplayStart ) )
 			FillDataToProcess( oBuffer, clipper.DisplayStart, clipper.DisplayEnd );
 
@@ -347,7 +342,7 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 
 void HexEditor_ImGUI::DrawAddrSelected( ImDrawList* draw_list, const float fWindowPosX,const float fWindowPosY )
 {
-	if( m_iAdressSelected != -1 )
+	if( m_iAdressSelected != UINT16_MAX )
 	{
 		//Check if current Addr selected is in current viewport
 		int line = m_iAdressSelected / m_oVisualVariable.iBytesPerLine;
