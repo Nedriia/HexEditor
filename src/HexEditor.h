@@ -54,7 +54,7 @@ class HexEditor
 			int			m_iSize = 0;
 			int			m_iStart = 0;
 
-			bool		OptShowDataPreview = false;
+			bool		OptShowDataPreview = true;
 			bool		OptShowAscii = true;
 			bool		OptGreyOutZeroes = true;
 		};

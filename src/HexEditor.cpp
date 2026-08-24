@@ -48,13 +48,18 @@ void HexEditor::FillDataToProcess( Buffer& oDataBuffer,int iStart,int iEnd )
 
 	for( int i = iStart; i < iEnd; ++i )
 	{
-		char* aBuffer = new char[ 8 ];
 		uint16_t iAdress = i * m_oVisualVariable.iBytesPerLine;
-		uint8_t* value = oDataBuffer.Get() + ( iAdress );
+		if( iAdress >= 0x8000 )
+		{
+			m_oDataFormat[ i - iStart ].m_aAdress = nullptr;
+			continue;
+		}
 
+		char* aBuffer = new char[ 8 ];
 		snprintf( aBuffer, sizeof( aBuffer ), "0X%04X:", iAdress );
 		m_oDataFormat[ i - iStart ].m_aAdress = aBuffer;
 
+		uint8_t* value = oDataBuffer.Get() + ( iAdress );
 		for( int k = 0; k < m_oVisualVariable.iBytesPerLine; ++k )
 		{
 			aBuffer = new char[ 8 ];
