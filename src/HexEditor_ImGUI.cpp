@@ -255,7 +255,7 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 		if( m_iAdressSelected >= 0 && m_iAdressSelected < 0XFFFF )
 		{
 			ImGui::BeginChild( "##scrolling" );
-			ImGui::SetScrollFromPosY( ImGui::GetCursorStartPos().y + ( m_iAdressSelected / m_oVisualVariable.iBytesPerLine ) );
+			ImGui::SetScrollFromPosY( ImGui::GetCursorStartPos().y + ( m_iAdressSelected / m_oVisualVariable.iBytesPerLine ) * m_oVisualVariable.fHeightNewLine );
 			ImGui::EndChild();
 		}
 	}
@@ -365,7 +365,6 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 				else
 				{
 					float relativeXSecond = mouse_pos.x - ( window_pos.x + m_oVisualVariable.fXPosStartASCII + m_oVisualVariable.fFontHex );
-					std::cout << relativeXSecond << std::endl;
 					int secondHalfCol = static_cast< int >( relativeXSecond / m_oVisualVariable.fSpaceASCII );
 					hoveredCol = secondHalfCol;
 				}
@@ -379,7 +378,6 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 					iAdress = ( m_oVisualVariable.m_iStart * m_oVisualVariable.iBytesPerLine ) + iAdress;
 					iAdress += hoveredCol;
 					m_iAdressSelected = iAdress;
-					std::cout << hoveredCol << std::endl;
 				}
 			}
 		}
@@ -397,20 +395,30 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 	else if( ImGui::IsKeyPressed( ImGuiKey_LeftArrow ) ) { col--; }
 	else if( ImGui::IsKeyPressed( ImGuiKey_RightArrow ) ) { col++; }
 
-	if( line != 0 || col != 0 )
+	int iAdress = m_iAdressSelected;
+	if( line != 0 )
 	{
-		int iAdress = m_iAdressSelected;
 		int Hoverline = ( ( iAdress - ( m_oVisualVariable.m_iStart * m_oVisualVariable.iBytesPerLine ) ) / m_oVisualVariable.iBytesPerLine ) + line;
-		int Hovercol = ( iAdress % m_oVisualVariable.iBytesPerLine ) + col;
 
 		if( Hoverline > 0 )
+		{
 			iAdress = m_oVisualVariable.iBytesPerLine * Hoverline;
-		iAdress = ( m_oVisualVariable.m_iStart * m_oVisualVariable.iBytesPerLine ) + iAdress;
-		iAdress += Hovercol;
+			iAdress = ( m_oVisualVariable.m_iStart * m_oVisualVariable.iBytesPerLine ) + iAdress;
+		}
+		else
+			iAdress = m_oVisualVariable.m_iStart * m_oVisualVariable.iBytesPerLine;
 
-		if( iAdress < 0x8000 )
-			m_iAdressSelected = iAdress;
+		iAdress += ( m_iAdressSelected % m_oVisualVariable.iBytesPerLine );
 	}
+
+	if( col != 0 )
+	{
+		int Hovercol = ( col % m_oVisualVariable.iBytesPerLine );
+		iAdress += Hovercol;
+	}
+
+	if( iAdress < 0x8000 )
+		m_iAdressSelected = iAdress;
 }
 
 void HexEditor_ImGUI::DrawAddrSelected( ImDrawList* draw_list, const float fWindowPosX,const float fWindowPosY )
