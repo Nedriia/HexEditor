@@ -47,7 +47,6 @@ static void glfw_error_callback( int error,const char* description )
 HexEditor_ImGUI::HexEditor_ImGUI()
 	: m_pWindow( nullptr )
 	,m_iAdressSelected( UINT16_MAX )
-	,m_iTempValueAtAddrSelected( 0 )
 {
 }
 
@@ -141,7 +140,7 @@ void HexEditor_ImGUI::VisualVariable::SetSizes( const float fDPI_Scale,const flo
 	fXPosStartASCII		= fFontAdress + ( iBytesPerLine * fSpaceHex ) + fMidSpaceHex;
 }
 
-void HexEditor_ImGUI::Update( Buffer& oBuffer )
+void HexEditor_ImGUI::Update()
 {
 	auto start = std::chrono::high_resolution_clock::now();
 
@@ -155,6 +154,9 @@ void HexEditor_ImGUI::Update( Buffer& oBuffer )
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
+	
+	if( m_pBuffer == nullptr )
+		return;
 
 	static double iDurationMs;
 	char titleBuffer[ 128 ];
@@ -163,7 +165,7 @@ void HexEditor_ImGUI::Update( Buffer& oBuffer )
 	{
 		SelectAddrToEdit();
 
-		UpdateWithDrawList( oBuffer );
+		UpdateWithDrawList();
 		DrawOptions();
 	}
 	
@@ -173,7 +175,7 @@ void HexEditor_ImGUI::Update( Buffer& oBuffer )
 	iDurationMs = std::chrono::duration<double,std::milli>( end - start ).count();
 }
 
-void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
+void HexEditor_ImGUI::UpdateWithDrawList()
 {
 	ImGuiStyle& style = ImGui::GetStyle();
 	m_oVisualVariable.SetSizes( style.FontScaleDpi,style.ItemSpacing.y );
@@ -185,7 +187,7 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 	draw_list->AddLine( ImVec2( window_pos.x + m_oVisualVariable.fXPosStartASCII,window_pos.y ),ImVec2( window_pos.x + m_oVisualVariable.fXPosStartASCII,window_pos.y + 9999 ),ImGui::GetColorU32( ImGuiCol_Border ) );
 	ImVec2 pos = { window_pos.x, window_pos.y };
 
-	const int line_total_count = ( oBuffer.GetSize() / m_oVisualVariable.iBytesPerLine ) + 1;
+	const int line_total_count = ( m_pBuffer->GetSize() / m_oVisualVariable.iBytesPerLine ) + 1;
 
 	ImGuiListClipper clipper;
 	clipper.Begin( line_total_count,m_oVisualVariable.fHeightNewLine );
@@ -193,7 +195,7 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 	while( clipper.Step() )
 	{
 		if( m_oVisualVariable.m_iStart != clipper.DisplayStart || m_oVisualVariable.m_iSize != ( clipper.DisplayEnd - clipper.DisplayStart ) )
-			FillDataToProcess( oBuffer, clipper.DisplayStart, clipper.DisplayEnd );
+			FillDataToProcess( clipper.DisplayStart, clipper.DisplayEnd );
 
 		for( int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++ )
 		{
@@ -206,7 +208,7 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 
 			for( int n = 0; n < m_oVisualVariable.iBytesPerLine; ++n )
 			{
-				if( m_oVisualVariable.OptGreyOutZeroes && ( *( oBuffer.Get() + ( line_i * m_oVisualVariable.iBytesPerLine ) + n ) ) == 0 )
+				if( m_oVisualVariable.OptGreyOutZeroes && ( *( m_pBuffer->Get() + ( line_i * m_oVisualVariable.iBytesPerLine ) + n ) ) == 0 )
 					draw_list->AddText( pos,ImGui::ColorConvertFloat4ToU32( ImVec4( 0.40f,0.40f,0.40f,1.00f ) ),"00" );
 				else
 					draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_Text ),m_oDataFormat[ iIndexData ].m_aHexData[ n ].c_str() );
@@ -223,7 +225,7 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 				//ASCII
 				for( int n = 0; n < m_oVisualVariable.iBytesPerLine; ++n )
 				{
-					uint8_t* it = oBuffer.Get() + ( line_i * m_oVisualVariable.iBytesPerLine ) + n;
+					uint8_t* it = m_pBuffer->Get() + ( line_i * m_oVisualVariable.iBytesPerLine ) + n;
 					ImGui::SameLine( n == 0 ? m_oVisualVariable.fSpaceASCII : 0 );
 
 					char display_c = ( ( *it ) < 32 || ( *it ) >= 128 ) ? '.' : ( *it );
@@ -250,12 +252,12 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 		if( m_oVisualVariable.iBytesPerLine < 1 )
 			m_oVisualVariable.iBytesPerLine = 1;
 
-		FillDataToProcess( oBuffer,clipper.DisplayStart,clipper.DisplayEnd );
+		FillDataToProcess( clipper.DisplayStart,clipper.DisplayEnd );
 	}
 	ImGui::SameLine();
 	size_t base_display_addr = 0X0000;
 	const char* format_range = "Range " "%04X..%04X";
-	ImGui::Text( format_range,base_display_addr,base_display_addr + oBuffer.GetSize() );
+	ImGui::Text( format_range,base_display_addr,base_display_addr + m_pBuffer->GetSize() );
 	ImGui::SameLine();
 	if( ImGui::DragScalar( "##",ImGuiDataType_U16,&m_iAdressSelected,0.2f,NULL,NULL,"%04X" ) )
 	{
@@ -271,18 +273,18 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 	ImGui::PopItemWidth();
 	ImGui::Separator();
 
-	m_iTempValueAtAddrSelected = *( oBuffer.Get() + m_iAdressSelected );
+	uint8_t iValue = *( m_pBuffer->Get() + m_iAdressSelected );
 	if( m_oVisualVariable.OptShowDataPreview && m_iAdressSelected != 0xFFFF )
 	{
 		char aBuffer[24];
-		std::snprintf( aBuffer,sizeof( aBuffer ),"DEC : %i",m_iTempValueAtAddrSelected );
+		std::snprintf( aBuffer,sizeof( aBuffer ),"DEC : %i",iValue );
 
 		ImGui::Text( aBuffer );
 
-		std::snprintf( aBuffer,sizeof( aBuffer ),"HEX : %02X",m_iTempValueAtAddrSelected );
+		std::snprintf( aBuffer,sizeof( aBuffer ),"HEX : %02X",iValue );
 		ImGui::Text( aBuffer );
 
-		itoa( m_iTempValueAtAddrSelected,aBuffer,2 );
+		itoa( iValue,aBuffer,2 );
 		ImGui::Text( "Binary : %s", aBuffer);
 	}
 }
@@ -294,7 +296,10 @@ void HexEditor_ImGUI::Render( Buffer& oBuffer,bool& bQuit )
 		if( glfwGetKey( m_pWindow,GLFW_KEY_ESCAPE ) == GLFW_PRESS )
 			glfwSetWindowShouldClose( m_pWindow,true );
 
-		Update( oBuffer );
+		if( m_pBuffer == nullptr )
+			m_pBuffer = &oBuffer;
+
+		Update();
 
 		glClearColor( 0.f,0.f,0.f,1.f );
 		glClear( GL_COLOR_BUFFER_BIT );
@@ -499,6 +504,8 @@ void HexEditor_ImGUI::character_callback( GLFWwindow* window,unsigned int codepo
 			else
 			{
 				pInstance->m_oDataFormat[ line ].m_aHexData[ col ] += c;
+				//Update memory with new value
+				pInstance->m_pBuffer->SetValueAtAdress( pInstance->m_iAdressSelected,std::stoi( pInstance->m_oDataFormat[ line ].m_aHexData[ col ],nullptr,16 ) );
 				pInstance->m_iAdressSelected++;
 			}
 		}

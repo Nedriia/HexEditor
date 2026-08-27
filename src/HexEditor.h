@@ -23,8 +23,8 @@ class HexEditor
 
 		std::string FormatDebug( const char* sFormat,... );
 
-		void DisplayDebugText( const Buffer& oBuffer );
-		void FillDataToProcess( Buffer& oBuffer,int iStart,int iEnd );
+		void DisplayDebugText();
+		void FillDataToProcess( int iStart,int iEnd );
 
 		struct MemoryDataFormatted
 		{
@@ -60,6 +60,7 @@ class HexEditor
 			bool		OptGreyOutZeroes = true;
 		};
 		VisualVariable m_oVisualVariable;
+		static Buffer* m_pBuffer;
 };
 
 

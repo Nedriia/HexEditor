@@ -10,6 +10,8 @@
 #include <cstring>
 #include "Buffer.h"
 
+Buffer* HexEditor::m_pBuffer = nullptr;
+
 HexEditor::~HexEditor()
 {
 }
@@ -29,20 +31,26 @@ std::string HexEditor::FormatDebug( const char* sFormat,... )
 	return &vec[ 0 ];
 }
 
-void HexEditor::DisplayDebugText( const Buffer& oBuffer )
+void HexEditor::DisplayDebugText()
 {
+	if( m_pBuffer == nullptr )
+		return;
+
 	std::ostringstream oss;
-	for( int i = 0; i < oBuffer.GetSize(); ++i )
+	for( int i = 0; i < m_pBuffer->GetSize(); ++i )
 	{
 		if( i % 16 == 0 )
 			oss << ( i != 0 ? "\n" : "" ) << FormatDebug( "%06x ",i );
-		oss << FormatDebug( "%02X ",oBuffer.ReadAtAdress( i ) );
+		oss << FormatDebug( "%02X ",m_pBuffer->ReadAtAdress( i ) );
 	}
 	std::cout << oss.str() << std::endl;
 }
 
-void HexEditor::FillDataToProcess( Buffer& oDataBuffer,int iStart,int iEnd )
+void HexEditor::FillDataToProcess( int iStart,int iEnd )
 {
+	if( m_pBuffer == nullptr )
+		return;
+
 	for( int i = iStart; i < iEnd; ++i )
 	{
 		uint16_t iAdress = i * m_oVisualVariable.iBytesPerLine;
@@ -59,7 +67,7 @@ void HexEditor::FillDataToProcess( Buffer& oDataBuffer,int iStart,int iEnd )
 		if( m_oDataFormat[ i - iStart ].m_aHexData.empty() )
 			m_oDataFormat[ i - iStart ].m_aHexData.resize( m_oVisualVariable.iBytesPerLine );
 
-		uint8_t* value = oDataBuffer.Get() + ( iAdress );
+		uint8_t* value = m_pBuffer->Get() + ( iAdress );
 		std::string hex( 3,'\0' );
 		for( int k = 0; k < m_oVisualVariable.iBytesPerLine; ++k )
 		{
