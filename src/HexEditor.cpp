@@ -12,6 +12,12 @@
 
 Buffer* HexEditor::m_pBuffer = nullptr;
 
+HexEditor::HexEditor()
+	: m_iAdressSelected ( UINT16_MAX )
+	 ,m_bIsEditing( false )
+{
+}
+
 HexEditor::~HexEditor()
 {
 }

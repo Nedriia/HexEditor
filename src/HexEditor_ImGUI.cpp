@@ -46,7 +46,6 @@ static void glfw_error_callback( int error,const char* description )
 
 HexEditor_ImGUI::HexEditor_ImGUI()
 	: m_pWindow( nullptr )
-	,m_iAdressSelected( UINT16_MAX )
 {
 }
 
@@ -389,6 +388,20 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 						iAdress = m_oVisualVariable.iBytesPerLine * hoveredLine;
 					iAdress = ( m_oVisualVariable.m_iStart * m_oVisualVariable.iBytesPerLine ) + iAdress;
 					iAdress += hoveredCol;
+
+					if( m_bIsEditing )
+					{
+						//Get back to the original value
+						int line = m_iAdressSelected / m_oVisualVariable.iBytesPerLine;
+						int col = m_iAdressSelected % m_oVisualVariable.iBytesPerLine;
+
+						uint8_t* value = m_pBuffer->Get() + m_iAdressSelected;
+						std::string hex( 3,'\0' );
+						std::snprintf( &hex[ 0 ],hex.size(),"%02X",*( value ) );
+
+						m_oDataFormat[ line ].m_aHexData[ col ] = hex;
+						m_bIsEditing = false;
+					}
 					m_iAdressSelected = iAdress;
 				}
 			}
@@ -430,7 +443,22 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 	}
 
 	if( iAdress < 0x8000 )
+	{
+		if( m_bIsEditing && iAdress != m_iAdressSelected )
+		{
+			//Get back to the original value
+			int line = m_iAdressSelected / m_oVisualVariable.iBytesPerLine;
+			int col = m_iAdressSelected % m_oVisualVariable.iBytesPerLine;
+
+			uint8_t* value = m_pBuffer->Get() + m_iAdressSelected;
+			std::string hex( 3,'\0' );
+			std::snprintf( &hex[ 0 ],hex.size(),"%02X",*( value ) );
+
+			m_oDataFormat[ line ].m_aHexData[ col ] = hex;
+			m_bIsEditing = false;
+		}
 		m_iAdressSelected = iAdress;
+	}
 }
 
 void HexEditor_ImGUI::DrawAddrSelected( ImDrawList* draw_list, const float fWindowPosX,const float fWindowPosY )
@@ -500,13 +528,17 @@ void HexEditor_ImGUI::character_callback( GLFWwindow* window,unsigned int codepo
 			int line = pInstance->m_iAdressSelected / pInstance->m_oVisualVariable.iBytesPerLine;
 			int col = pInstance->m_iAdressSelected % pInstance->m_oVisualVariable.iBytesPerLine;
 			if( pInstance->m_oDataFormat[ line ].m_aHexData[ col ].size() >= 2 )
+			{
+				pInstance->m_bIsEditing = true;
 				pInstance->m_oDataFormat[ line ].m_aHexData[ col ] = c;
+			}
 			else
 			{
 				pInstance->m_oDataFormat[ line ].m_aHexData[ col ] += c;
 				//Update memory with new value
 				pInstance->m_pBuffer->SetValueAtAdress( pInstance->m_iAdressSelected,std::stoi( pInstance->m_oDataFormat[ line ].m_aHexData[ col ],nullptr,16 ) );
-				pInstance->m_iAdressSelected++;
+				//pInstance->m_iAdressSelected++;
+				pInstance->m_bIsEditing = false;
 			}
 		}
 	}

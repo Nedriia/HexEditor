@@ -13,7 +13,7 @@ class Buffer;
 class HexEditor 
 {
 	public:
-		HexEditor(){};
+		HexEditor();
 		virtual ~HexEditor();
 
 		virtual int Init() = 0;
@@ -61,6 +61,9 @@ class HexEditor
 		};
 		VisualVariable m_oVisualVariable;
 		static Buffer* m_pBuffer;
+
+		uint16_t	m_iAdressSelected;
+		bool		m_bIsEditing;
 };
 
 

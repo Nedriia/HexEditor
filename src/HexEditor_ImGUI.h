@@ -32,7 +32,6 @@ class HexEditor_ImGUI : public HexEditor
 		void DrawOptions();
 		static void framebuffer_size_callback(  GLFWwindow* m_pWindow,int width,int height );
 		static void character_callback( GLFWwindow* window,unsigned int codepoint );
-		uint16_t	m_iAdressSelected;
 };
 
 
