@@ -16,6 +16,9 @@
 #include <sstream>
 #include <chrono>
 
+#include <cstdlib>
+#include <cstring>
+
 
 #ifdef LEAK_DETECTOR
 #include <vld.h>
@@ -44,6 +47,7 @@ static void glfw_error_callback( int error,const char* description )
 HexEditor_ImGUI::HexEditor_ImGUI()
 	: m_pWindow( nullptr )
 	,m_iAdressSelected( UINT16_MAX )
+	,m_iTempValueAtAddrSelected( 0 )
 {
 }
 
@@ -58,6 +62,9 @@ int HexEditor_ImGUI::Init()
 		return -1;
 
 	InitImGUI();
+
+	glfwSetWindowUserPointer( m_pWindow,this );
+	glfwSetCharCallback( m_pWindow,character_callback );
 
 	return 0;
 }
@@ -155,6 +162,7 @@ void HexEditor_ImGUI::Update( Buffer& oBuffer )
 	if( ImGui::Begin( titleBuffer,nullptr ) )
 	{
 		SelectAddrToEdit();
+
 		UpdateWithDrawList( oBuffer );
 		DrawOptions();
 	}
@@ -190,10 +198,10 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 		for( int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++ )
 		{
 			int iIndexData = line_i - m_oVisualVariable.m_iStart;
-			if( m_oDataFormat[ iIndexData ].m_aAdress == nullptr )//TEMP FIX
+			if( m_oDataFormat[ iIndexData ].m_aAdress.empty() )//TEMP FIX
 				break;
 
-			draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_TabHovered ), m_oDataFormat[ iIndexData ].m_aAdress );
+			draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_TabHovered ), m_oDataFormat[ iIndexData ].m_aAdress.c_str() );
 			pos.x += ImGui::CalcTextSize( "FFFFFFFF" ).x + 1;
 
 			for( int n = 0; n < m_oVisualVariable.iBytesPerLine; ++n )
@@ -201,7 +209,7 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 				if( m_oVisualVariable.OptGreyOutZeroes && ( *( oBuffer.Get() + ( line_i * m_oVisualVariable.iBytesPerLine ) + n ) ) == 0 )
 					draw_list->AddText( pos,ImGui::ColorConvertFloat4ToU32( ImVec4( 0.40f,0.40f,0.40f,1.00f ) ),"00" );
 				else
-					draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_Text ),m_oDataFormat[ iIndexData ].m_aHexData[ n ] );
+					draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_Text ),m_oDataFormat[ iIndexData ].m_aHexData[ n ].c_str() );
 
 				if( n + 1 == m_oVisualVariable.iHalfCol )
 					pos.x += m_oVisualVariable.fMidSpaceHex;
@@ -242,7 +250,6 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 		if( m_oVisualVariable.iBytesPerLine < 1 )
 			m_oVisualVariable.iBytesPerLine = 1;
 
-		CleanMemory();
 		FillDataToProcess( oBuffer,clipper.DisplayStart,clipper.DisplayEnd );
 	}
 	ImGui::SameLine();
@@ -264,18 +271,18 @@ void HexEditor_ImGUI::UpdateWithDrawList( Buffer& oBuffer )
 	ImGui::PopItemWidth();
 	ImGui::Separator();
 
+	m_iTempValueAtAddrSelected = *( oBuffer.Get() + m_iAdressSelected );
 	if( m_oVisualVariable.OptShowDataPreview && m_iAdressSelected != 0xFFFF )
 	{
 		char aBuffer[24];
-		auto value = *( oBuffer.Get() + m_iAdressSelected );
-		std::snprintf( aBuffer,sizeof( aBuffer ),"DEC : %i",value );
+		std::snprintf( aBuffer,sizeof( aBuffer ),"DEC : %i",m_iTempValueAtAddrSelected );
 
 		ImGui::Text( aBuffer );
 
-		std::snprintf( aBuffer,sizeof( aBuffer ),"HEX : %02X",value );
+		std::snprintf( aBuffer,sizeof( aBuffer ),"HEX : %02X",m_iTempValueAtAddrSelected );
 		ImGui::Text( aBuffer );
 
-		itoa( value,aBuffer,2 );
+		itoa( m_iTempValueAtAddrSelected,aBuffer,2 );
 		ImGui::Text( "Binary : %s", aBuffer);
 	}
 }
@@ -471,4 +478,29 @@ void HexEditor_ImGUI::framebuffer_size_callback( GLFWwindow* m_pWindow,int width
 	// make sure the viewport matches the new window dimensions; note that width and
 	// height will be significantly larger than specified on retina displays.
 	glViewport( 0,0,width,height );
+}
+
+void HexEditor_ImGUI::character_callback( GLFWwindow* window,unsigned int codepoint )
+{
+	char c = std::toupper( static_cast< char >( codepoint ) );
+
+	if( ( c >= '0' && c <= '9' ) || ( c >= 'A' && c <= 'F' ) )
+	{
+		HexEditor_ImGUI* pInstance = static_cast< HexEditor_ImGUI* >( glfwGetWindowUserPointer( window ) );
+		if( pInstance )
+		{
+			if( pInstance->m_iAdressSelected == 0xFFFF )
+				return;
+
+			int line = pInstance->m_iAdressSelected / pInstance->m_oVisualVariable.iBytesPerLine;
+			int col = pInstance->m_iAdressSelected % pInstance->m_oVisualVariable.iBytesPerLine;
+			if( pInstance->m_oDataFormat[ line ].m_aHexData[ col ].size() >= 2 )
+				pInstance->m_oDataFormat[ line ].m_aHexData[ col ] = c;
+			else
+			{
+				pInstance->m_oDataFormat[ line ].m_aHexData[ col ] += c;
+				pInstance->m_iAdressSelected++;
+			}
+		}
+	}
 }

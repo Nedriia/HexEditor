@@ -7,6 +7,7 @@
 
 #include <string>
 #include <cstdint>
+#include <vector>
 
 class Buffer;
 class HexEditor 
@@ -27,8 +28,8 @@ class HexEditor
 
 		struct MemoryDataFormatted
 		{
-			const char*		m_aAdress;
-			const char*		m_aHexData[ 32 ] { nullptr };
+			std::string						m_aAdress;
+			std::vector<std::string>		m_aHexData;
 		};
 		MemoryDataFormatted m_oDataFormat[ 256 ];
 
@@ -59,7 +60,6 @@ class HexEditor
 			bool		OptGreyOutZeroes = true;
 		};
 		VisualVariable m_oVisualVariable;
-		void CleanMemory();
 };
 
 

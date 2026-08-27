@@ -12,7 +12,6 @@
 
 HexEditor::~HexEditor()
 {
-	CleanMemory();
 }
 
 std::string HexEditor::FormatDebug( const char* sFormat,... )
@@ -44,47 +43,30 @@ void HexEditor::DisplayDebugText( const Buffer& oBuffer )
 
 void HexEditor::FillDataToProcess( Buffer& oDataBuffer,int iStart,int iEnd )
 {
-	CleanMemory();
-
 	for( int i = iStart; i < iEnd; ++i )
 	{
 		uint16_t iAdress = i * m_oVisualVariable.iBytesPerLine;
 		if( iAdress >= 0x8000 )
 		{
-			m_oDataFormat[ i - iStart ].m_aAdress = nullptr;
+			m_oDataFormat[ i - iStart ].m_aAdress = "";
 			continue;
 		}
 
-		char* aBuffer = new char[ 8 ];
-		snprintf( aBuffer, sizeof( aBuffer ), "0X%04X:", iAdress );
-		m_oDataFormat[ i - iStart ].m_aAdress = aBuffer;
+		std::string output( 7,'\0');
+		std::snprintf( &output[ 0 ], output.size(),"0X%04X",iAdress);
+		m_oDataFormat[ i - iStart ].m_aAdress = output;
+
+		if( m_oDataFormat[ i - iStart ].m_aHexData.empty() )
+			m_oDataFormat[ i - iStart ].m_aHexData.resize( m_oVisualVariable.iBytesPerLine );
 
 		uint8_t* value = oDataBuffer.Get() + ( iAdress );
+		std::string hex( 3,'\0' );
 		for( int k = 0; k < m_oVisualVariable.iBytesPerLine; ++k )
 		{
-			aBuffer = new char[ 8 ];
-			uint8_t* data = value + k;
-
-			snprintf( aBuffer,sizeof( aBuffer ),"%02X",( *data ) );
-			m_oDataFormat[ i - iStart ].m_aHexData[ k ] = aBuffer;
+			std::snprintf( &hex[ 0 ],hex.size(),"%02X", *( value + k ) );
+			m_oDataFormat[ i - iStart ].m_aHexData[ k ] = hex;
 		}
 	}
 	m_oVisualVariable.m_iSize = iEnd - iStart;
 	m_oVisualVariable.m_iStart = iStart;
-}
-
-void HexEditor::CleanMemory()
-{
-	for( int i = 0; i < m_oVisualVariable.m_iSize; ++i )
-	{
-		for( int k = 0; k < 32; ++k )
-		{
-			delete[] m_oDataFormat[ i ].m_aHexData[ k ];
-			m_oDataFormat[ i ].m_aHexData[ k ] = nullptr;
-		}
-		delete[] m_oDataFormat[ i ].m_aAdress;
-		m_oDataFormat[ i ].m_aAdress = nullptr;
-	}
-	m_oVisualVariable.m_iSize = 0;
-	m_oVisualVariable.m_iStart = 0;
 }
