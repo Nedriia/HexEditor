@@ -83,4 +83,14 @@ void HexEditor::FillDataToProcess( int iStart,int iEnd )
 	}
 	m_oVisualVariable.m_iSize = iEnd - iStart;
 	m_oVisualVariable.m_iStart = iStart;
+
+	if( m_iAdressSelected != UINT16_MAX && m_bIsEditing )
+	{
+		uint16_t iStartAdress = iStart * m_oVisualVariable.iBytesPerLine;
+		if( m_iAdressSelected < iStartAdress ||
+			m_iAdressSelected > iStartAdress + ( m_oVisualVariable.m_iSize * m_oVisualVariable.iBytesPerLine ) )
+		{
+			m_bIsEditing = false;
+		}
+	}
 }
