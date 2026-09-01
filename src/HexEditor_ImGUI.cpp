@@ -189,22 +189,21 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 
 	const int line_total_count = ( m_pBuffer->GetSize() / m_oVisualVariable.iBytesPerLine ) + 1;
 
-	ImGuiListClipper clipper;
-	clipper.Begin( line_total_count,m_oVisualVariable.fHeightNewLine );
-
 	if( m_bScrollToFocus )
 	{
 		int selectedLine = ( m_iAdressSelected / m_oVisualVariable.iBytesPerLine );
 		float fDirection = m_oVisualVariable.m_iStart < selectedLine ? 1.0f : 0.0f;
 		selectedLine += fDirection;
-		clipper.IncludeItemByIndex( selectedLine );
 
-		const float selectedY = selectedLine * m_oVisualVariable.fHeightNewLine;
+		float selectedY = selectedLine * m_oVisualVariable.fHeightNewLine;
+		if( fDirection == 0.0f )
+			selectedY += m_oVisualVariable.fTitleHeight - m_oVisualVariable.fHeightNewLine;
 		ImGui::SetScrollFromPosY( ImGui::GetCursorStartPos().y + selectedY,fDirection );
 		m_bScrollToFocus = false;
-
-		FillDataToProcess( selectedLine,selectedLine + m_oVisualVariable.m_iSize );
 	}
+
+	ImGuiListClipper clipper;
+	clipper.Begin( line_total_count,m_oVisualVariable.fHeightNewLine );
 
 	while( clipper.Step() )
 	{
@@ -423,9 +422,10 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 
 	if( line != 0 || col != 0 )
 	{
+		int Hoverline = 0;
 		if( line != 0 )
 		{
-			int Hoverline = ( ( iAdress - ( m_oVisualVariable.m_iStart * m_oVisualVariable.iBytesPerLine ) ) / m_oVisualVariable.iBytesPerLine ) + line;
+			Hoverline = ( ( iAdress - ( m_oVisualVariable.m_iStart * m_oVisualVariable.iBytesPerLine ) ) / m_oVisualVariable.iBytesPerLine ) + line;
 
 			if( Hoverline > 0 )
 			{
@@ -441,25 +441,20 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 				else
 					iAdress += line * m_oVisualVariable.iBytesPerLine;
 			}
-
-			if( Hoverline >= m_oVisualVariable.m_iSize - 1 )
-			{
-				ImGui::BeginChild( "##scrolling" );
-				ImGui::SetScrollFromPosY( ImGui::GetCursorStartPos().y + ( m_iAdressSelected / m_oVisualVariable.iBytesPerLine ) * m_oVisualVariable.fHeightNewLine - ( ( m_oVisualVariable.m_iSize - 5 ) / 2 ) * m_oVisualVariable.fHeightNewLine );
-				ImGui::EndChild();
-			}
-			else if( Hoverline == -1 )
-			{
-				ImGui::BeginChild( "##scrolling" );
-				ImGui::SetScrollFromPosY( ImGui::GetCursorStartPos().y + ( ( m_iAdressSelected / m_oVisualVariable.iBytesPerLine ) * m_oVisualVariable.fHeightNewLine ) );
-				ImGui::EndChild();
-			}
 		}
 		if( col != 0 )
 		{
-			int Hovercol = ( col % m_oVisualVariable.iBytesPerLine );
-			iAdress += Hovercol;
+			int hoverCol = ( m_iAdressSelected % m_oVisualVariable.iBytesPerLine );
+			if( iAdress + col < ( m_oVisualVariable.m_iStart * m_oVisualVariable.iBytesPerLine ) )
+				m_bScrollToFocus = true;
+			iAdress += col;
+
+			if( hoverCol >= m_oVisualVariable.iBytesPerLine - 1 && col > 0 )
+				Hoverline = ( ( iAdress - ( m_oVisualVariable.m_iStart * m_oVisualVariable.iBytesPerLine ) ) / m_oVisualVariable.iBytesPerLine );
 		}
+
+		if( Hoverline <= -1 || Hoverline >= m_oVisualVariable.m_iSize )
+			m_bScrollToFocus = true;
 
 		SetAdressSelection( iAdress );
 	}
