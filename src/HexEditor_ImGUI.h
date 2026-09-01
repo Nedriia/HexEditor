@@ -33,6 +33,8 @@ class HexEditor_ImGUI : public HexEditor
 		void SetAdressSelection( const uint16_t iAdress );
 		static void framebuffer_size_callback(  GLFWwindow* m_pWindow,int width,int height );
 		static void character_callback( GLFWwindow* window,unsigned int codepoint );
+
+		bool m_bScrollToFocus;
 };
 
 

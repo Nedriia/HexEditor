@@ -46,6 +46,7 @@ static void glfw_error_callback( int error,const char* description )
 
 HexEditor_ImGUI::HexEditor_ImGUI()
 	: m_pWindow( nullptr )
+	 ,m_bScrollToFocus( false )
 {
 }
 
@@ -190,6 +191,20 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 
 	ImGuiListClipper clipper;
 	clipper.Begin( line_total_count,m_oVisualVariable.fHeightNewLine );
+
+	if( m_bScrollToFocus )
+	{
+		int selectedLine = ( m_iAdressSelected / m_oVisualVariable.iBytesPerLine );
+		float fDirection = m_oVisualVariable.m_iStart < selectedLine ? 1.0f : 0.0f;
+		selectedLine += fDirection;
+		clipper.IncludeItemByIndex( selectedLine );
+
+		const float selectedY = selectedLine * m_oVisualVariable.fHeightNewLine;
+		ImGui::SetScrollFromPosY( ImGui::GetCursorStartPos().y + selectedY,fDirection );
+		m_bScrollToFocus = false;
+
+		FillDataToProcess( selectedLine,selectedLine + m_oVisualVariable.m_iSize );
+	}
 
 	while( clipper.Step() )
 	{
