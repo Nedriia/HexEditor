@@ -5,6 +5,7 @@
 #include "HexEditor_ImGUI.h"
 #include <cstdio>
 #include <vector>
+#include <bitset>
 
 #include "Buffer.h"
 #include "imgui.h"
@@ -292,8 +293,7 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 		std::snprintf( aBuffer,sizeof( aBuffer ),"HEX : %02X",iValue );
 		ImGui::Text( aBuffer );
 
-		//itoa( iValue,aBuffer,2 );
-		ImGui::Text( "Binary : %s",aBuffer );
+		ImGui::Text( "Binary : %s",std::bitset<8>( iValue ).to_string().c_str() );
 	}
 }
 
