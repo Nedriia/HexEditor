@@ -4,7 +4,6 @@
 
 #include "HexEditor_ImGUI.h"
 #include <cstdio>
-#include <iostream>
 #include <vector>
 
 #include "Buffer.h"
@@ -126,7 +125,7 @@ void HexEditor_ImGUI::VisualVariable::SetSizes( const float fDPI_Scale,const flo
 	fFontChar					= ImGui::CalcTextSize( "F" ).x + 1.0f;
 	fFontHex					= ImGui::CalcTextSize( "FF" ).x + 1.0f;
 	fFontHeight					= ImGui::CalcTextSize( "F" ).y + 1.0f;
-	fFontAdress					= ImGui::CalcTextSize( "FFFFFFFF" ).x + 1.0f;
+	fFontAdress					= ImGui::CalcTextSize( "FFFFFFFFFFF" ).x + 1.0f;
 	fSpaceHex					= fFontHex + ( 3.5f * fDPI_Scale );
 	fMidSpaceHex				= fFontHex + ( 15.0f * fDPI_Scale );
 	fSpaceASCII					= fFontChar + ( 1.5f * fDPI_Scale );
@@ -217,7 +216,7 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 				break;
 
 			draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_TabHovered ),m_oDataFormat[ iIndexData ].m_aAdress.c_str() );
-			pos.x += ImGui::CalcTextSize( "FFFFFFFF" ).x + 1;
+			pos.x += m_oVisualVariable.fFontAdress;
 
 			for( int n = 0; n < m_oVisualVariable.iBytesPerLine; ++n )
 			{
@@ -268,10 +267,10 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 		FillDataToProcess( clipper.DisplayStart,clipper.DisplayEnd );
 	}
 	ImGui::SameLine();
-	const char* format_range = "Range " "%04I64X..%04I64X";
+	const char* format_range = "Range " "%08I64X..%08I64X";
 	ImGui::Text( format_range,0, m_pBuffer->GetSize() - 1 );
 	ImGui::SameLine();
-	if( ImGui::DragScalar( "##",ImGuiDataType_S64,&m_iAdressSelected,0.2f,NULL,NULL,"%04X" ) )
+	if( ImGui::DragScalar( "##",ImGuiDataType_S64,&m_iAdressSelected,0.2f,NULL,NULL,"%08I64X" ) )
 	{
 		if( m_iAdressSelected >= 0 && m_iAdressSelected < m_pBuffer->GetSize() )
 		{
