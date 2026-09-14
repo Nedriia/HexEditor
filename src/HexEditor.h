@@ -23,7 +23,6 @@ class HexEditor
 
 		std::string FormatDebug( const char* sFormat,... );
 
-		void DisplayDebugText();
 		void FillDataToProcess( int iStart,int iEnd );
 
 		struct MemoryDataFormatted
@@ -62,7 +61,7 @@ class HexEditor
 		VisualVariable m_oVisualVariable;
 		static Buffer* m_pBuffer;
 
-		uint16_t	m_iAdressSelected;
+		long long	m_iAdressSelected;
 		bool		m_bIsEditing;
 };
 

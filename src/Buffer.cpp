@@ -21,7 +21,7 @@ int Buffer::LoadFromFile( const char* sPathFile )
 		std::streamsize size = file.tellg();
 		try
 		{
-			if( size <= 0 || size > MemoryMap::MEMORY_SIZE )
+			if( size <= 0 || size > MemoryMap::MEMORY_SIZE_LIMIT )
 				throw std::runtime_error( "SIZE_INVALID" );
 
 			m_pBuffer = std::make_unique<uint8_t[]>( static_cast< size_t >( size ) );
@@ -49,26 +49,4 @@ int Buffer::LoadFromFile( const char* sPathFile )
 		return -1;
 	}
 	return 0;
-}
-
-uint8_t Buffer::ReadAtAdress ( const uint16_t iAdress ) const
-{
-	if( iAdress >= m_iSize )
-	{
-		std::cout << "ERROR::ADRESS_INVALID" << std::endl;
-		return 0xFF;
-	}
-
-	return m_pBuffer[ iAdress ];
-}
-
-void Buffer::SetValueAtAdress( const uint16_t iAdress, uint8_t iValue )
-{
-	if( iAdress < 0 || iAdress >= m_iSize )
-	{
-		std::cout << "ERROR::ADRESS_INVALID" << std::endl;
-		return;
-	}
-
-	m_pBuffer[ iAdress ] = iValue;
 }

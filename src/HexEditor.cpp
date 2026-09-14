@@ -13,7 +13,7 @@
 Buffer* HexEditor::m_pBuffer = nullptr;
 
 HexEditor::HexEditor()
-	: m_iAdressSelected ( UINT16_MAX )
+	: m_iAdressSelected ( LLONG_MAX )
 	 ,m_bIsEditing( false )
 {
 }
@@ -37,20 +37,6 @@ std::string HexEditor::FormatDebug( const char* sFormat,... )
 	return &vec[ 0 ];
 }
 
-void HexEditor::DisplayDebugText()
-{
-	if( m_pBuffer == nullptr )
-		return;
-
-	std::ostringstream oss;
-	for( int i = 0; i < m_pBuffer->GetSize(); ++i )
-	{
-		if( i % 16 == 0 )
-			oss << ( i != 0 ? "\n" : "" ) << FormatDebug( "%06x ",i );
-		oss << FormatDebug( "%02X ",m_pBuffer->ReadAtAdress( i ) );
-	}
-	std::cout << oss.str() << std::endl;
-}
 
 void HexEditor::FillDataToProcess( int iStart,int iEnd )
 {
@@ -59,15 +45,15 @@ void HexEditor::FillDataToProcess( int iStart,int iEnd )
 
 	for( int i = iStart; i < iEnd; ++i )
 	{
-		uint16_t iAdress = i * m_oVisualVariable.iBytesPerLine;
-		if( iAdress >= 0x8000 )
+		uint64_t iAdress = i * m_oVisualVariable.iBytesPerLine;
+		if( iAdress >= m_pBuffer->GetSize() )
 		{
 			m_oDataFormat[ i - iStart ].m_aAdress = "";
 			continue;
 		}
 
-		std::string output( 7,'\0');
-		std::snprintf( &output[ 0 ], output.size(),"0X%04X",iAdress);
+		std::string output( 13,'\0');
+		std::snprintf( &output[ 0 ], output.size(),"0X%04I64X",iAdress);
 		m_oDataFormat[ i - iStart ].m_aAdress = output;
 
 		if( m_oDataFormat[ i - iStart ].m_aHexData.empty() )
@@ -84,9 +70,9 @@ void HexEditor::FillDataToProcess( int iStart,int iEnd )
 	m_oVisualVariable.m_iSize = iEnd - iStart;
 	m_oVisualVariable.m_iStart = iStart;
 
-	if( m_iAdressSelected != UINT16_MAX && m_bIsEditing )
+	if( m_iAdressSelected != LLONG_MAX && m_bIsEditing )
 	{
-		uint16_t iStartAdress = iStart * m_oVisualVariable.iBytesPerLine;
+		long long iStartAdress = iStart * m_oVisualVariable.iBytesPerLine;
 		if( m_iAdressSelected < iStartAdress ||
 			m_iAdressSelected > iStartAdress + ( m_oVisualVariable.m_iSize * m_oVisualVariable.iBytesPerLine ) )
 		{

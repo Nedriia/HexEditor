@@ -9,7 +9,7 @@
 
 namespace MemoryMap
 {
-	constexpr uint16_t MEMORY_SIZE = 0xFFFF;
+	constexpr long long MEMORY_SIZE_LIMIT = LLONG_MAX;
 }
 
 class Buffer
@@ -19,14 +19,36 @@ class Buffer
 
 		int LoadFromFile( const char* sPathFile );
 
-		uint8_t ReadAtAdress( const uint16_t iAdress ) const;
-		void SetValueAtAdress( const uint16_t iAdress, uint8_t iValue );
-		uint16_t GetSize() const { return m_iSize; }
+		template<typename AdressType>
+		uint8_t ReadAtAdress( const AdressType iAdress ) const
+		{
+			if( iAdress >= m_iSize )
+			{
+				std::cout << "ERROR::ADRESS_INVALID" << std::endl;
+				return 0xFF;
+			}
+
+			return m_pBuffer[ iAdress ];
+		}
+
+		template<typename AdressType>
+		void SetValueAtAdress( const AdressType iAdress,uint8_t iValue )
+		{
+			if( iAdress < 0 || iAdress >= m_iSize )
+			{
+				std::cout << "ERROR::ADRESS_INVALID" << std::endl;
+				return;
+			}
+
+			memcpy( &m_pBuffer[ iAdress ],&iValue,sizeof( iValue ) );
+		}
+
+		long long GetSize() const { return m_iSize; }
 		uint8_t* Get() { return m_pBuffer.get(); }
 
 	private:
 		std::unique_ptr<uint8_t[]> m_pBuffer;
-		uint16_t m_iSize;
+		long long m_iSize;
 };
 
 
