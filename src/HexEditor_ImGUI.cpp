@@ -253,7 +253,7 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 	ImGui::Separator();
 
 	DrawAddrSelected( draw_list,window_pos.x,window_pos.y );
-	ImGui::PushItemWidth( ( 12 * m_oVisualVariable.fDPIScale ) * 7 + style.FramePadding.x * 2.0f );
+	ImGui::PushItemWidth( ( 12 * m_oVisualVariable.fDPIScale ) * 10 + style.FramePadding.x * 2.0f );
 	if( ImGui::DragInt( "##cols",&m_oVisualVariable.iBytesPerLine,0.2f,4,32,"%d cols" ) )
 	{
 		m_oVisualVariable.iHalfCol = m_oVisualVariable.iBytesPerLine / 2;
@@ -274,6 +274,10 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 			ImGui::BeginChild( "##scrolling" );
 			ImGui::SetScrollFromPosY( ImGui::GetCursorStartPos().y + ( m_iAdressSelected / m_oVisualVariable.iBytesPerLine ) * m_oVisualVariable.fHeightNewLine );
 			ImGui::EndChild();
+		}
+		else
+		{
+			m_iAdressSelected = LLONG_MAX;
 		}
 	}
 
