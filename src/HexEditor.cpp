@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cstring>
 #include "Buffer.h"
+#include <climits>
 
 Buffer* HexEditor::m_pBuffer = nullptr;
 
