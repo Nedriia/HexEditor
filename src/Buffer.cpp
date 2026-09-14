@@ -4,7 +4,6 @@
 
 #include "Buffer.h"
 #include <fstream>
-#include <iostream>
 #include <iomanip>
 
 Buffer::Buffer() 

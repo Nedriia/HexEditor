@@ -15,10 +15,6 @@
 #include <sstream>
 #include <chrono>
 
-#include <cstdlib>
-#include <cstring>
-
-
 #ifdef LEAK_DETECTOR
 #include <vld.h>
 #define ENABLE_GLOBAL_LEAK_DETECTION() VLDGlobalEnable()
@@ -296,7 +292,7 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 		std::snprintf( aBuffer,sizeof( aBuffer ),"HEX : %02X",iValue );
 		ImGui::Text( aBuffer );
 
-		itoa( iValue,aBuffer,2 );
+		//itoa( iValue,aBuffer,2 );
 		ImGui::Text( "Binary : %s",aBuffer );
 	}
 }

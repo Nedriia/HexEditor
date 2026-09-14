@@ -8,6 +8,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "HexEditor.h"
+#include "iostream"
 
 struct ImDrawList;
 class HexEditor_ImGUI : public HexEditor

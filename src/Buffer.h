@@ -6,6 +6,12 @@
 #define HEXEDITOR_BUFFER_H
 #include <cstdint>
 #include <memory>
+#include <climits>
+#include <iostream>
+
+# ifndef  _WIN32
+#include <string.h>
+#endif
 
 namespace MemoryMap
 {
