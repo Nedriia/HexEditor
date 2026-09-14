@@ -264,10 +264,10 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 		FillDataToProcess( clipper.DisplayStart,clipper.DisplayEnd );
 	}
 	ImGui::SameLine();
-	const char* format_range = "Range " "%08I64X..%08I64X";
+	const char* format_range = "Range " "%08llX..%08llX";
 	ImGui::Text( format_range,0, m_pBuffer->GetSize() - 1 );
 	ImGui::SameLine();
-	if( ImGui::DragScalar( "##",ImGuiDataType_S64,&m_iAdressSelected,0.2f,NULL,NULL,"%08I64X" ) )
+	if( ImGui::DragScalar( "##",ImGuiDataType_S64,&m_iAdressSelected,0.2f,NULL,NULL,"%08llX" ) )
 	{
 		if( m_iAdressSelected >= 0 && m_iAdressSelected < m_pBuffer->GetSize() )
 		{

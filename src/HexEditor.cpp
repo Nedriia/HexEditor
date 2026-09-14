@@ -54,7 +54,7 @@ void HexEditor::FillDataToProcess( int iStart,int iEnd )
 		}
 
 		std::string output( 13,'\0');
-		std::snprintf( &output[ 0 ], output.size(),"0X%08I64X",iAdress);
+		std::snprintf( &output[ 0 ], output.size(),"0X%08llX",iAdress);
 		m_oDataFormat[ i - iStart ].m_aAdress = output;
 
 		if( m_oDataFormat[ i - iStart ].m_aHexData.empty() )
