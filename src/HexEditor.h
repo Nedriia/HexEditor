@@ -8,6 +8,7 @@
 #include <string>
 #include <cstdint>
 #include <vector>
+#include <GLFW/glfw3.h>
 
 class Buffer;
 class HexEditor 
@@ -16,8 +17,7 @@ class HexEditor
 		HexEditor();
 		virtual ~HexEditor();
 
-		virtual int Init() = 0;
-		virtual void Render( Buffer& oBuffer, bool& bQuit ){};
+		virtual void Render( GLFWwindow* pWindow, Buffer& oBuffer ){};
 
 	protected:
 

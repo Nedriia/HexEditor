@@ -17,12 +17,12 @@ class HexEditor_ImGUI : public HexEditor
 		HexEditor_ImGUI();
 		~HexEditor_ImGUI();
 
-		int Init() override;
-		int InitWindow();
+		int  Init( GLFWwindow* mainWindow );
+		int  InitWindow();
 		void InitImGUI();
-		void Update();
+		void Update( GLFWwindow* pWindow );
 		void UpdateWithDrawList();
-		void Render( Buffer& oBuffer, bool& bQuit ) override;
+		void Render( GLFWwindow* pWindow, Buffer& oBuffer ) override;
 
 		void Quit();
 	private:

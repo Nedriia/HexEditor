@@ -48,18 +48,15 @@ HexEditor_ImGUI::HexEditor_ImGUI()
 
 HexEditor_ImGUI::~HexEditor_ImGUI()
 {
-	Quit();
+	//Quit();
 }
 
-int HexEditor_ImGUI::Init()
+int HexEditor_ImGUI::Init( GLFWwindow* mainWindow )
 {
-	if( InitWindow() != 0 )
-		return -1;
-
 	InitImGUI();
 
-	glfwSetWindowUserPointer( m_pWindow,this );
-	glfwSetCharCallback( m_pWindow,character_callback );
+	glfwSetWindowUserPointer( mainWindow,this );
+	glfwSetCharCallback( mainWindow,character_callback );
 
 	return 0;
 }
@@ -102,16 +99,12 @@ void HexEditor_ImGUI::InitImGUI()
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGui::StyleColorsLight();
+	//ImGui::StyleColorsLight();
 
 	ImGuiStyle& style = ImGui::GetStyle();
 	style.FontSizeBase = 20.0f;
-	style.FontScaleDpi = 1.5f;
+	style.FontScaleDpi = 1.0f;
 	style.ScaleAllSizes( style.FontScaleDpi );
-
-	// Setup Platform/Renderer backends
-	ImGui_ImplGlfw_InitForOpenGL( m_pWindow,true );
-	ImGui_ImplOpenGL3_Init( "#version 330" );
 }
 
 void HexEditor_ImGUI::VisualVariable::SetSizes( const float fDPI_Scale,const float fItemSpacing )
@@ -136,24 +129,11 @@ void HexEditor_ImGUI::VisualVariable::SetSizes( const float fDPI_Scale,const flo
 	fXPosStartASCII				= fFontAdress + ( iBytesPerLine * fSpaceHex ) + fMidSpaceHex;
 }
 
-void HexEditor_ImGUI::Update()
+void HexEditor_ImGUI::Update( GLFWwindow* pWindow )
 {
 	auto start = std::chrono::high_resolution_clock::now();
 
 	glfwPollEvents();
-	if( glfwGetWindowAttrib( m_pWindow,GLFW_ICONIFIED ) != 0 )
-	{
-		ImGui_ImplGlfw_Sleep( 10 );
-		return;
-	}
-
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
-
-	if( m_pBuffer == nullptr )
-		return;
-
 	static double iDurationMs;
 	char titleBuffer[ 128 ];
 	std::snprintf( titleBuffer,sizeof( titleBuffer ),"Hex Editor (%.2f ms)###HexEditorWindow",iDurationMs );
@@ -301,32 +281,14 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 	}
 }
 
-void HexEditor_ImGUI::Render( Buffer& oBuffer,bool& bQuit )
+void HexEditor_ImGUI::Render( GLFWwindow* pWindow, Buffer& oBuffer )
 {
-	if( !glfwWindowShouldClose( m_pWindow ) )
-	{
-		if( glfwGetKey( m_pWindow,GLFW_KEY_ESCAPE ) == GLFW_PRESS )
-			glfwSetWindowShouldClose( m_pWindow,true );
+	if( m_pBuffer == nullptr )
+		m_pBuffer = &oBuffer;
 
-		if( m_pBuffer == nullptr )
-			m_pBuffer = &oBuffer;
-
-		Update();
-
-		glClearColor( 0.f,0.f,0.f,1.f );
-		glClear( GL_COLOR_BUFFER_BIT );
-
-		int display_w,display_h;
-		glfwGetFramebufferSize( m_pWindow,&display_w,&display_h );
-		glViewport( 0,0,display_w,display_h );
-
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
-
-		glfwSwapBuffers( m_pWindow );
-	}
-	else
-		bQuit = true;
+	if ( m_pWindow == nullptr )
+		m_pWindow = pWindow;
+	Update( m_pWindow );
 }
 
 void HexEditor_ImGUI::Quit()
@@ -338,10 +300,10 @@ void HexEditor_ImGUI::Quit()
 
 		ImGui::DestroyContext();
 
-		glfwDestroyWindow( m_pWindow );
+		//glfwDestroyWindow( m_pWindow );
 	}
 
-	glfwTerminate();
+	//glfwTerminate();
 	m_pWindow = nullptr;
 }
 
