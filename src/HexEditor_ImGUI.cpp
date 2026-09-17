@@ -48,13 +48,12 @@ HexEditor_ImGUI::HexEditor_ImGUI()
 
 HexEditor_ImGUI::~HexEditor_ImGUI()
 {
-	Quit();
+	//Quit();
 }
 
-int HexEditor_ImGUI::Init()
+int HexEditor_ImGUI::Init( GLFWwindow* mainWindow )
 {
-	if( InitWindow() != 0 )
-		return -1;
+	m_pWindow = mainWindow;
 
 	InitImGUI();
 
@@ -102,16 +101,12 @@ void HexEditor_ImGUI::InitImGUI()
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGui::StyleColorsLight();
+	//ImGui::StyleColorsLight();
 
 	ImGuiStyle& style = ImGui::GetStyle();
 	style.FontSizeBase = 20.0f;
-	style.FontScaleDpi = 1.5f;
+	style.FontScaleDpi = 1.0f;
 	style.ScaleAllSizes( style.FontScaleDpi );
-
-	// Setup Platform/Renderer backends
-	ImGui_ImplGlfw_InitForOpenGL( m_pWindow,true );
-	ImGui_ImplOpenGL3_Init( "#version 330" );
 }
 
 void HexEditor_ImGUI::VisualVariable::SetSizes( const float fDPI_Scale,const float fItemSpacing )
@@ -141,19 +136,6 @@ void HexEditor_ImGUI::Update()
 	auto start = std::chrono::high_resolution_clock::now();
 
 	glfwPollEvents();
-	if( glfwGetWindowAttrib( m_pWindow,GLFW_ICONIFIED ) != 0 )
-	{
-		ImGui_ImplGlfw_Sleep( 10 );
-		return;
-	}
-
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
-
-	if( m_pBuffer == nullptr )
-		return;
-
 	static double iDurationMs;
 	char titleBuffer[ 128 ];
 	std::snprintf( titleBuffer,sizeof( titleBuffer ),"Hex Editor (%.2f ms)###HexEditorWindow",iDurationMs );
@@ -176,14 +158,14 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 	ImGuiStyle& style = ImGui::GetStyle();
 	m_oVisualVariable.SetSizes( style.FontScaleDpi,style.ItemSpacing.y );
 
-	ImGui::BeginChild( "##scrolling",ImVec2( 0,m_oVisualVariable.OptShowDataPreview ? -m_oVisualVariable.fFooterHeightExtend : -m_oVisualVariable.fFooterHeight ),false,ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav );
+	ImGui::BeginChild( "##scrolling",ImVec2( 0,m_pBuffer && ( m_oVisualVariable.OptShowDataPreview && m_iAdressSelected < m_pBuffer->GetSize() ) ? -m_oVisualVariable.fFooterHeightExtend : -m_oVisualVariable.fFooterHeight ),false,ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav );
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
 	ImVec2 window_pos = ImGui::GetWindowPos();
 	draw_list->AddLine( ImVec2( window_pos.x + m_oVisualVariable.fXPosStartASCII,window_pos.y ),ImVec2( window_pos.x + m_oVisualVariable.fXPosStartASCII,window_pos.y + 9999 ),ImGui::GetColorU32( ImGuiCol_Border ) );
 	ImVec2 pos = { window_pos.x, window_pos.y };
 
-	const int line_total_count = ( m_pBuffer->GetSize() / m_oVisualVariable.iBytesPerLine ) + 1;
+	const int line_total_count = m_pBuffer ? ( m_pBuffer->GetSize() / m_oVisualVariable.iBytesPerLine ) : 0;
 
 	if( m_bScrollToFocus )
 	{
@@ -201,7 +183,7 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 	ImGuiListClipper clipper;
 	clipper.Begin( line_total_count,m_oVisualVariable.fHeightNewLine );
 
-	while( clipper.Step() )
+	while( clipper.Step() && m_pBuffer )
 	{
 		if( m_oVisualVariable.m_iStart != clipper.DisplayStart || m_oVisualVariable.m_iSize != ( clipper.DisplayEnd - clipper.DisplayStart ) )
 			FillDataToProcess( clipper.DisplayStart,clipper.DisplayEnd );
@@ -264,12 +246,15 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 		FillDataToProcess( clipper.DisplayStart,clipper.DisplayEnd );
 	}
 	ImGui::SameLine();
-	const char* format_range = "Range " "%08llX..%08llX";
-	ImGui::Text( format_range,0, m_pBuffer->GetSize() - 1 );
-	ImGui::SameLine();
+	if ( m_pBuffer )
+	{
+		const char* format_range = "Range " "%08llX..%08llX";
+		ImGui::Text( format_range,0, m_pBuffer->GetSize() - 1 );
+		ImGui::SameLine();
+	}
 	if( ImGui::DragScalar( "##",ImGuiDataType_S64,&m_iAdressSelected,0.2f,NULL,NULL,"%08llX" ) )
 	{
-		if( m_iAdressSelected >= 0 && m_iAdressSelected < m_pBuffer->GetSize() )
+		if( m_pBuffer && m_iAdressSelected >= 0 && m_iAdressSelected < m_pBuffer->GetSize() )
 		{
 			ImGui::BeginChild( "##scrolling" );
 			ImGui::SetScrollFromPosY( ImGui::GetCursorStartPos().y + ( m_iAdressSelected / m_oVisualVariable.iBytesPerLine ) * m_oVisualVariable.fHeightNewLine );
@@ -285,7 +270,7 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 	ImGui::PopItemWidth();
 	ImGui::Separator();
 
-	if( m_oVisualVariable.OptShowDataPreview && m_iAdressSelected < m_pBuffer->GetSize() )
+	if( m_pBuffer && m_oVisualVariable.OptShowDataPreview && m_iAdressSelected < m_pBuffer->GetSize() )
 	{
 		uint8_t iValue = *( m_pBuffer->Get() + m_iAdressSelected );
 
@@ -301,32 +286,9 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 	}
 }
 
-void HexEditor_ImGUI::Render( Buffer& oBuffer,bool& bQuit )
+void HexEditor_ImGUI::Render()
 {
-	if( !glfwWindowShouldClose( m_pWindow ) )
-	{
-		if( glfwGetKey( m_pWindow,GLFW_KEY_ESCAPE ) == GLFW_PRESS )
-			glfwSetWindowShouldClose( m_pWindow,true );
-
-		if( m_pBuffer == nullptr )
-			m_pBuffer = &oBuffer;
-
-		Update();
-
-		glClearColor( 0.f,0.f,0.f,1.f );
-		glClear( GL_COLOR_BUFFER_BIT );
-
-		int display_w,display_h;
-		glfwGetFramebufferSize( m_pWindow,&display_w,&display_h );
-		glViewport( 0,0,display_w,display_h );
-
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
-
-		glfwSwapBuffers( m_pWindow );
-	}
-	else
-		bQuit = true;
+	Update();
 }
 
 void HexEditor_ImGUI::Quit()
@@ -338,10 +300,10 @@ void HexEditor_ImGUI::Quit()
 
 		ImGui::DestroyContext();
 
-		glfwDestroyWindow( m_pWindow );
+		//glfwDestroyWindow( m_pWindow );
 	}
 
-	glfwTerminate();
+	//glfwTerminate();
 	m_pWindow = nullptr;
 }
 

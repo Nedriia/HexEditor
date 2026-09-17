@@ -8,6 +8,7 @@
 #include <string>
 #include <cstdint>
 #include <vector>
+#include <GLFW/glfw3.h>
 
 class Buffer;
 class HexEditor 
@@ -15,14 +16,10 @@ class HexEditor
 	public:
 		HexEditor();
 		virtual ~HexEditor();
-
-		virtual int Init() = 0;
-		virtual void Render( Buffer& oBuffer, bool& bQuit ){};
-
+		void LoadFile( const char* sFile );
 	protected:
 
 		std::string FormatDebug( const char* sFormat,... );
-
 		void FillDataToProcess( int iStart,int iEnd );
 
 		struct MemoryDataFormatted
