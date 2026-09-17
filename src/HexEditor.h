@@ -16,13 +16,10 @@ class HexEditor
 	public:
 		HexEditor();
 		virtual ~HexEditor();
-
-		virtual void Render( GLFWwindow* pWindow, Buffer& oBuffer ){};
-
+		void LoadFile( const char* sFile );
 	protected:
 
 		std::string FormatDebug( const char* sFormat,... );
-
 		void FillDataToProcess( int iStart,int iEnd );
 
 		struct MemoryDataFormatted

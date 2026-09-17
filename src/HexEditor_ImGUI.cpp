@@ -53,10 +53,12 @@ HexEditor_ImGUI::~HexEditor_ImGUI()
 
 int HexEditor_ImGUI::Init( GLFWwindow* mainWindow )
 {
+	m_pWindow = mainWindow;
+
 	InitImGUI();
 
-	glfwSetWindowUserPointer( mainWindow,this );
-	glfwSetCharCallback( mainWindow,character_callback );
+	glfwSetWindowUserPointer( m_pWindow,this );
+	glfwSetCharCallback( m_pWindow,character_callback );
 
 	return 0;
 }
@@ -129,7 +131,7 @@ void HexEditor_ImGUI::VisualVariable::SetSizes( const float fDPI_Scale,const flo
 	fXPosStartASCII				= fFontAdress + ( iBytesPerLine * fSpaceHex ) + fMidSpaceHex;
 }
 
-void HexEditor_ImGUI::Update( GLFWwindow* pWindow )
+void HexEditor_ImGUI::Update()
 {
 	auto start = std::chrono::high_resolution_clock::now();
 
@@ -156,14 +158,14 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 	ImGuiStyle& style = ImGui::GetStyle();
 	m_oVisualVariable.SetSizes( style.FontScaleDpi,style.ItemSpacing.y );
 
-	ImGui::BeginChild( "##scrolling",ImVec2( 0,m_oVisualVariable.OptShowDataPreview ? -m_oVisualVariable.fFooterHeightExtend : -m_oVisualVariable.fFooterHeight ),false,ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav );
+	ImGui::BeginChild( "##scrolling",ImVec2( 0,m_pBuffer && ( m_oVisualVariable.OptShowDataPreview && m_iAdressSelected < m_pBuffer->GetSize() ) ? -m_oVisualVariable.fFooterHeightExtend : -m_oVisualVariable.fFooterHeight ),false,ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav );
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
 	ImVec2 window_pos = ImGui::GetWindowPos();
 	draw_list->AddLine( ImVec2( window_pos.x + m_oVisualVariable.fXPosStartASCII,window_pos.y ),ImVec2( window_pos.x + m_oVisualVariable.fXPosStartASCII,window_pos.y + 9999 ),ImGui::GetColorU32( ImGuiCol_Border ) );
 	ImVec2 pos = { window_pos.x, window_pos.y };
 
-	const int line_total_count = ( m_pBuffer->GetSize() / m_oVisualVariable.iBytesPerLine ) + 1;
+	const int line_total_count = m_pBuffer ? ( m_pBuffer->GetSize() / m_oVisualVariable.iBytesPerLine ) : 0;
 
 	if( m_bScrollToFocus )
 	{
@@ -181,7 +183,7 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 	ImGuiListClipper clipper;
 	clipper.Begin( line_total_count,m_oVisualVariable.fHeightNewLine );
 
-	while( clipper.Step() )
+	while( clipper.Step() && m_pBuffer )
 	{
 		if( m_oVisualVariable.m_iStart != clipper.DisplayStart || m_oVisualVariable.m_iSize != ( clipper.DisplayEnd - clipper.DisplayStart ) )
 			FillDataToProcess( clipper.DisplayStart,clipper.DisplayEnd );
@@ -244,12 +246,15 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 		FillDataToProcess( clipper.DisplayStart,clipper.DisplayEnd );
 	}
 	ImGui::SameLine();
-	const char* format_range = "Range " "%08llX..%08llX";
-	ImGui::Text( format_range,0, m_pBuffer->GetSize() - 1 );
-	ImGui::SameLine();
+	if ( m_pBuffer )
+	{
+		const char* format_range = "Range " "%08llX..%08llX";
+		ImGui::Text( format_range,0, m_pBuffer->GetSize() - 1 );
+		ImGui::SameLine();
+	}
 	if( ImGui::DragScalar( "##",ImGuiDataType_S64,&m_iAdressSelected,0.2f,NULL,NULL,"%08llX" ) )
 	{
-		if( m_iAdressSelected >= 0 && m_iAdressSelected < m_pBuffer->GetSize() )
+		if( m_pBuffer && m_iAdressSelected >= 0 && m_iAdressSelected < m_pBuffer->GetSize() )
 		{
 			ImGui::BeginChild( "##scrolling" );
 			ImGui::SetScrollFromPosY( ImGui::GetCursorStartPos().y + ( m_iAdressSelected / m_oVisualVariable.iBytesPerLine ) * m_oVisualVariable.fHeightNewLine );
@@ -265,7 +270,7 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 	ImGui::PopItemWidth();
 	ImGui::Separator();
 
-	if( m_oVisualVariable.OptShowDataPreview && m_iAdressSelected < m_pBuffer->GetSize() )
+	if( m_pBuffer && m_oVisualVariable.OptShowDataPreview && m_iAdressSelected < m_pBuffer->GetSize() )
 	{
 		uint8_t iValue = *( m_pBuffer->Get() + m_iAdressSelected );
 
@@ -281,14 +286,9 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 	}
 }
 
-void HexEditor_ImGUI::Render( GLFWwindow* pWindow, Buffer& oBuffer )
+void HexEditor_ImGUI::Render()
 {
-	if( m_pBuffer == nullptr )
-		m_pBuffer = &oBuffer;
-
-	if ( m_pWindow == nullptr )
-		m_pWindow = pWindow;
-	Update( m_pWindow );
+	Update();
 }
 
 void HexEditor_ImGUI::Quit()

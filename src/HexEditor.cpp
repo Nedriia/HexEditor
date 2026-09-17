@@ -21,6 +21,15 @@ HexEditor::HexEditor()
 
 HexEditor::~HexEditor()
 {
+	delete m_pBuffer;
+}
+
+void HexEditor::LoadFile( const char* sFile )
+{
+	if ( m_pBuffer == nullptr )
+		m_pBuffer = new Buffer();
+
+	m_pBuffer->LoadFromFile( sFile );
 }
 
 std::string HexEditor::FormatDebug( const char* sFormat,... )

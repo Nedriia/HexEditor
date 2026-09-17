@@ -7,6 +7,8 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#include "Buffer.h"
 #include "HexEditor.h"
 #include "iostream"
 
@@ -20,9 +22,9 @@ class HexEditor_ImGUI : public HexEditor
 		int  Init( GLFWwindow* mainWindow );
 		int  InitWindow();
 		void InitImGUI();
-		void Update( GLFWwindow* pWindow );
+		void Update();
 		void UpdateWithDrawList();
-		void Render( GLFWwindow* pWindow, Buffer& oBuffer ) override;
+		void Render();
 
 		void Quit();
 	private:

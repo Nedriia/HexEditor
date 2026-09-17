@@ -34,7 +34,7 @@ class Buffer
 				return 0xFF;
 			}
 
-			return m_pBuffer[ iAdress ];
+			return m_aDataBuffer[ iAdress ];
 		}
 
 		template<typename AdressType>
@@ -46,14 +46,14 @@ class Buffer
 				return;
 			}
 
-			memcpy( &m_pBuffer[ iAdress ],&iValue,sizeof( iValue ) );
+			memcpy( &m_aDataBuffer[ iAdress ],&iValue,sizeof( iValue ) );
 		}
 
 		long long GetSize() const { return m_iSize; }
-		uint8_t* Get() { return m_pBuffer.get(); }
+		uint8_t* Get() { return m_aDataBuffer.get(); }
 
 	private:
-		std::unique_ptr<uint8_t[]> m_pBuffer;
+		std::unique_ptr<uint8_t[]> m_aDataBuffer;
 		long long m_iSize;
 };
 
