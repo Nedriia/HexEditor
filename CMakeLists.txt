@@ -7,7 +7,6 @@ set(LIBS_DIR "${PROJECT_DIR}/Librairies")
 set(VENDOR_DIR "${PROJECT_DIR}/vendor")
 
 add_executable(${PROJECT_NAME}
-        ${SRC_DIR}/main.cpp
         ${SRC_DIR}/Buffer.cpp
         ${SRC_DIR}/Buffer.h
         ${SRC_DIR}/HexEditor.cpp
