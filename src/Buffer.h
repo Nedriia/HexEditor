@@ -24,6 +24,18 @@ class Buffer
 		Buffer();
 
 		int LoadFromFile( const char* sPathFile );
+		template <class T, std::size_t N>
+		int LoadFromMemory( const std::array<T, N>& aData )
+		{
+			m_aDataBuffer = std::make_unique<uint8_t[]>( N );
+
+			for (std::size_t i = 0; i < N; ++i)
+				m_aDataBuffer[i] = static_cast<uint8_t>( aData[i] );
+
+			m_iSize = N;
+
+			return 0;
+		}
 
 		template<typename AdressType>
 		uint8_t ReadAtAdress( const AdressType iAdress ) const
