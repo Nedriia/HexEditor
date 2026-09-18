@@ -16,21 +16,6 @@
 #include <sstream>
 #include <chrono>
 
-#ifdef LEAK_DETECTOR
-#include <vld.h>
-#define ENABLE_GLOBAL_LEAK_DETECTION() VLDGlobalEnable()
-#define DISABLE_GLOBAL_LEAK_DETECTION() VLDGlobalDisable()
-
-#define ENABLE_SPECIFIC_LEAK_DETECTION() VLDEnable()
-#define DISABLE_SPECIFIC_LEAK_DETECTION() VLDDisable()
-#else
-#define ENABLE_GLOBAL_LEAK_DETECTION() ((void)0)
-#define DISABLE_GLOBAL_LEAK_DETECTION() ((void)0)
-
-#define ENABLE_SPECIFIC_LEAK_DETECTION() ((void)0)
-#define DISABLE_SPECIFIC_LEAK_DETECTION() ((void)0)
-#endif
-
 #define NULL_DATA_COLOR IM_COL32( 75,75,75,255 )
 #define CHANGE_DATA_COLOR IM_COL32( 255,0,0,255 )
 #define DEFAULT_DATA_COLOR IM_COL32( 255,255,255,180 )
@@ -73,14 +58,12 @@ int HexEditor_ImGUI::InitWindow()
 	glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR,3 );
 	glfwWindowHint( GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE );
 
-	DISABLE_SPECIFIC_LEAK_DETECTION();
 	m_pWindow = glfwCreateWindow( 2140,980,"Hex Editor",nullptr,nullptr );
 	if( m_pWindow == nullptr )
 	{
 		std::cout << "DISPLAY::FAILED_TO_CREATE_GLFW_WINDOW" << std::endl;
 		return -1;
 	}
-	ENABLE_SPECIFIC_LEAK_DETECTION();
 
 	glfwMakeContextCurrent( m_pWindow );
 	glfwSetFramebufferSizeCallback( m_pWindow,HexEditor_ImGUI::framebuffer_size_callback );
