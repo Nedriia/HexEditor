@@ -9,14 +9,23 @@
 #include <cstdint>
 #include <vector>
 #include <GLFW/glfw3.h>
+#include "Buffer.h"
 
-class Buffer;
+
 class HexEditor 
 {
 	public:
 		HexEditor();
 		virtual ~HexEditor();
-		void LoadFile( const char* sFile );
+		void LoadBufferFromFile( const char* sFile );
+		template <class T, std::size_t N>
+		void LoadBufferFromMemory( const std::array<T, N>& aData )
+		{
+			if ( m_pBuffer == nullptr )
+				m_pBuffer = new Buffer();
+
+			m_pBuffer->LoadFromMemory( aData );
+		}
 	protected:
 
 		std::string FormatDebug( const char* sFormat,... );
