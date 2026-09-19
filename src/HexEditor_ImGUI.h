@@ -20,11 +20,9 @@ class HexEditor_ImGUI : public HexEditor
 		~HexEditor_ImGUI();
 
 		int  Init( GLFWwindow* mainWindow );
-		int  InitWindow();
 		void InitImGUI();
 		void Update();
 		void UpdateWithDrawList();
-		void Render();
 
 		void Quit();
 	private:
@@ -39,7 +37,7 @@ class HexEditor_ImGUI : public HexEditor
 		template <typename T>
 		void SetAdressSelection( const T iAdress )
 		{
-			if( iAdress < 0 || iAdress >= m_pBuffer->GetSize() )
+			if( m_pBuffer == nullptr || iAdress < 0 || iAdress >= m_pBuffer->GetSize() )
 			{
 				std::cout << "ERROR::ADRESS_INVALID" << std::endl;
 				return;

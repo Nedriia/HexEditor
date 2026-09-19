@@ -33,7 +33,6 @@ HexEditor_ImGUI::HexEditor_ImGUI()
 
 HexEditor_ImGUI::~HexEditor_ImGUI()
 {
-	//Quit();
 }
 
 int HexEditor_ImGUI::Init( GLFWwindow* mainWindow )
@@ -48,42 +47,10 @@ int HexEditor_ImGUI::Init( GLFWwindow* mainWindow )
 	return 0;
 }
 
-int HexEditor_ImGUI::InitWindow()
-{
-	glfwSetErrorCallback( glfw_error_callback );
-	if( !glfwInit() )
-		return -1;
-
-	glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR,3 );
-	glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR,3 );
-	glfwWindowHint( GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE );
-
-	m_pWindow = glfwCreateWindow( 2140,980,"Hex Editor",nullptr,nullptr );
-	if( m_pWindow == nullptr )
-	{
-		std::cout << "DISPLAY::FAILED_TO_CREATE_GLFW_WINDOW" << std::endl;
-		return -1;
-	}
-
-	glfwMakeContextCurrent( m_pWindow );
-	glfwSetFramebufferSizeCallback( m_pWindow,HexEditor_ImGUI::framebuffer_size_callback );
-
-	// glad: load all OpenGL function pointers
-	// ---------------------------------------
-	if( !gladLoadGLLoader( ( GLADloadproc )glfwGetProcAddress ) )
-	{
-		std::cerr << "DISPLAY::GLAD_FAILED_TO_INIT" << std::endl;
-		return -1;
-	}
-
-	glfwSwapInterval( 1 ); //Put 0 in case you want to uncap the speed
-	return 0;
-}
-
 void HexEditor_ImGUI::InitImGUI()
 {
 	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
+	//ImGui::CreateContext();
 	//ImGui::StyleColorsLight();
 
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -269,24 +236,11 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 	}
 }
 
-void HexEditor_ImGUI::Render()
-{
-	Update();
-}
-
 void HexEditor_ImGUI::Quit()
 {
 	if( m_pWindow != nullptr )
-	{
-		ImGui_ImplOpenGL3_Shutdown();
-		ImGui_ImplGlfw_Shutdown();
-
 		ImGui::DestroyContext();
 
-		//glfwDestroyWindow( m_pWindow );
-	}
-
-	//glfwTerminate();
 	m_pWindow = nullptr;
 }
 
