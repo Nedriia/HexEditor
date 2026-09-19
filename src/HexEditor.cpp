@@ -55,7 +55,7 @@ void HexEditor::FillDataToProcess( int iStart,int iEnd )
 
 	for( int i = iStart; i < iEnd; ++i )
 	{
-		uint64_t iAdress = i * m_oVisualVariable.iBytesPerLine;
+		long long iAdress = i * m_oVisualVariable.iBytesPerLine;
 		if( iAdress >= m_pBuffer->GetSize() )
 		{
 			m_oDataFormat[ i - iStart ].m_aAdress = "";

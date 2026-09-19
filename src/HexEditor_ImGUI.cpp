@@ -227,10 +227,10 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 		char aBuffer[ 24 ];
 		std::snprintf( aBuffer,sizeof( aBuffer ),"DEC : %i",iValue );
 
-		ImGui::Text( aBuffer );
+		ImGui::Text( "%s", aBuffer );
 
 		std::snprintf( aBuffer,sizeof( aBuffer ),"HEX : %02X",iValue );
-		ImGui::Text( aBuffer );
+		ImGui::Text( "%s", aBuffer );
 
 		ImGui::Text( "Binary : %s",std::bitset<8>( iValue ).to_string().c_str() );
 	}
