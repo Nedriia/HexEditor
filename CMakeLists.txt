@@ -3,8 +3,6 @@ project(HexEditor)
 
 set(PROJECT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(SRC_DIR "${PROJECT_DIR}/src")
-set(LIBS_DIR "${PROJECT_DIR}/Librairies")
-set(VENDOR_DIR "${PROJECT_DIR}/vendor")
 
 add_executable(${PROJECT_NAME}
         ${SRC_DIR}/Buffer.cpp

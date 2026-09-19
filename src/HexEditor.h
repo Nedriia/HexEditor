@@ -8,7 +8,6 @@
 #include <string>
 #include <cstdint>
 #include <vector>
-#include <GLFW/glfw3.h>
 #include "Buffer.h"
 
 
