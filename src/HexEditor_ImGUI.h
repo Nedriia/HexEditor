@@ -20,7 +20,6 @@ class HexEditor_ImGUI : public HexEditor
 		~HexEditor_ImGUI();
 
 		int  Init( GLFWwindow* mainWindow );
-		void InitImGUI();
 		void Update();
 		void UpdateWithDrawList();
 

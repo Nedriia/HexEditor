@@ -39,24 +39,10 @@ int HexEditor_ImGUI::Init( GLFWwindow* mainWindow )
 {
 	m_pWindow = mainWindow;
 
-	InitImGUI();
-
 	glfwSetWindowUserPointer( m_pWindow,this );
 	glfwSetCharCallback( m_pWindow,character_callback );
 
 	return 0;
-}
-
-void HexEditor_ImGUI::InitImGUI()
-{
-	IMGUI_CHECKVERSION();
-	//ImGui::CreateContext();
-	//ImGui::StyleColorsLight();
-
-	ImGuiStyle& style = ImGui::GetStyle();
-	style.FontSizeBase = 20.0f;
-	style.FontScaleDpi = 1.0f;
-	style.ScaleAllSizes( style.FontScaleDpi );
 }
 
 void HexEditor_ImGUI::VisualVariable::SetSizes( const float fDPI_Scale,const float fItemSpacing )
