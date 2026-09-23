@@ -104,7 +104,7 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 		for ( int i = 0; i < m_oVisualVariable.iBytesPerLine; ++i )
 		{
 			ImFormatString( aBuffer, sizeof(aBuffer), "%02X", i );
-			draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_TitleBgActive ), aBuffer );
+			draw_list->AddText( pos,ImGui::GetColorU32(ImGuiCol_TextLink ), aBuffer );
 			if ( i + 1 == m_oVisualVariable.iHalfCol )
 				pos.x += m_oVisualVariable.fMidSpaceHex;
 			else
@@ -113,9 +113,10 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 		pos.y += m_oVisualVariable.fHeightNewLine;
 		pos.x = ImGui::GetCursorScreenPos().x;
 	}
-
-	ImGui::BeginChild( "##scrolling",ImVec2( 0,m_pBuffer && ( m_oVisualVariable.OptShowDataPreview && m_iAdressSelected < m_pBuffer->GetSize() ) ? -m_oVisualVariable.fFooterHeightExtend : -m_oVisualVariable.fFooterHeight ),false,ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav );
+	ImGui::SetCursorScreenPos(ImVec2(ImGui::GetCursorScreenPos().x,ImGui::GetCursorScreenPos().y + m_oVisualVariable.fHeightNewLine ) );
+	ImGui::BeginChild( "##scrolling",ImVec2( 0.0f,m_pBuffer && ( m_oVisualVariable.OptShowDataPreview && m_iAdressSelected < m_pBuffer->GetSize() ) ? -m_oVisualVariable.fFooterHeightExtend : -m_oVisualVariable.fFooterHeight ),false,ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav );
 	ImVec2 window_pos = ImGui::GetWindowPos();
+	draw_list = ImGui::GetWindowDrawList();
 	draw_list->AddLine( ImVec2( window_pos.x + m_oVisualVariable.fXPosStartASCII,window_pos.y ),ImVec2( window_pos.x + m_oVisualVariable.fXPosStartASCII,window_pos.y + 9999 ),ImGui::GetColorU32( ImGuiCol_Border ) );
 
 	const int line_total_count = m_pBuffer ? ( m_pBuffer->GetSize() / m_oVisualVariable.iBytesPerLine ) : 0;
@@ -267,7 +268,7 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 		{
 			//Now check if the mouse is on data
 			float gridStartX = window_pos.x + m_oVisualVariable.fFontAdress;
-			float gridStartY = window_pos.y + m_oVisualVariable.fTitleHeight;
+			float gridStartY = window_pos.y + m_oVisualVariable.fTitleHeight + m_oVisualVariable.fHeightNewLine;
 
 			float relativeX = mouse_pos.x - gridStartX;
 			float relativeY = mouse_pos.y - gridStartY;
