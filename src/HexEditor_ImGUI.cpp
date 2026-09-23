@@ -94,12 +94,26 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 	ImGuiStyle& style = ImGui::GetStyle();
 	m_oVisualVariable.SetSizes( style.FontScaleDpi,style.ItemSpacing.y );
 
-	ImGui::BeginChild( "##scrolling",ImVec2( 0,m_pBuffer && ( m_oVisualVariable.OptShowDataPreview && m_iAdressSelected < m_pBuffer->GetSize() ) ? -m_oVisualVariable.fFooterHeightExtend : -m_oVisualVariable.fFooterHeight ),false,ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav );
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
+	ImVec2 pos = ImGui::GetCursorScreenPos();
 
+	pos.x += m_oVisualVariable.fFontAdress;
+	char aBuffer[4] = "";
+	for ( int i = 0; i < m_oVisualVariable.iBytesPerLine; ++i )
+	{
+		ImFormatString( aBuffer, sizeof(aBuffer), "%02X", i );
+		draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_TitleBgActive ), aBuffer );
+		if ( i + 1 == m_oVisualVariable.iHalfCol )
+			pos.x += m_oVisualVariable.fMidSpaceHex;
+		else
+			pos.x += m_oVisualVariable.fSpaceHex;
+	}
+	pos.y += m_oVisualVariable.fHeightNewLine;
+	pos.x = ImGui::GetCursorScreenPos().x;
+
+	ImGui::BeginChild( "##scrolling",ImVec2( 0,m_pBuffer && ( m_oVisualVariable.OptShowDataPreview && m_iAdressSelected < m_pBuffer->GetSize() ) ? -m_oVisualVariable.fFooterHeightExtend : -m_oVisualVariable.fFooterHeight ),false,ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav );
 	ImVec2 window_pos = ImGui::GetWindowPos();
 	draw_list->AddLine( ImVec2( window_pos.x + m_oVisualVariable.fXPosStartASCII,window_pos.y ),ImVec2( window_pos.x + m_oVisualVariable.fXPosStartASCII,window_pos.y + 9999 ),ImGui::GetColorU32( ImGuiCol_Border ) );
-	ImVec2 pos = { window_pos.x, window_pos.y };
 
 	const int line_total_count = m_pBuffer ? ( m_pBuffer->GetSize() / m_oVisualVariable.iBytesPerLine ) : 0;
 
