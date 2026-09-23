@@ -270,7 +270,7 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 
 		ImVec2 zone_max(
 			window_pos.x + window_size.x,
-			window_pos.y + window_size.y - fFooterHeight - ( m_oVisualVariable.fTitleHeight * 0.5f ) - ( m_oVisualVariable.fHeightNewLine * 0.25f ) + ImGui::GetStyle().WindowPadding.y
+			window_pos.y + window_size.y - fFooterHeight - ( m_oVisualVariable.fHeightNewLine * 0.5f ) //Temp 0.5f to limit selection on the last line ( can occur the selection of a line hide under the footer )
 		);
 
 		if( ImGui::IsMouseHoveringRect(zone_min, zone_max) )
