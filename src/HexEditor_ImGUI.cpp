@@ -260,11 +260,20 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 		ImVec2 window_size = ImGui::GetWindowSize();
 
 		float fFooterHeight = m_oVisualVariable.fFooterHeight;
-		if( m_oVisualVariable.OptShowDataPreview )
+		if( m_oVisualVariable.OptShowDataPreview && m_iAdressSelected != LLONG_MAX )
 			fFooterHeight = m_oVisualVariable.fFooterHeightExtend;
 
-		if( mouse_pos.x >= window_pos.x && mouse_pos.x <= window_pos.x + window_size.x &&
-			mouse_pos.y >= window_pos.y + m_oVisualVariable.fTitleHeight && mouse_pos.y <= window_pos.y + window_size.y - fFooterHeight - m_oVisualVariable.fTitleHeight * 0.5f )
+		ImVec2 zone_min(
+			window_pos.x,
+			window_pos.y + m_oVisualVariable.fTitleHeight + m_oVisualVariable.fHeightNewLine
+		);
+
+		ImVec2 zone_max(
+			window_pos.x + window_size.x,
+			window_pos.y + window_size.y - fFooterHeight - ( m_oVisualVariable.fTitleHeight * 0.5f ) - ( m_oVisualVariable.fHeightNewLine * 0.25f ) + ImGui::GetStyle().WindowPadding.y
+		);
+
+		if( ImGui::IsMouseHoveringRect(zone_min, zone_max) )
 		{
 			//Now check if the mouse is on data
 			float gridStartX = window_pos.x + m_oVisualVariable.fFontAdress;
