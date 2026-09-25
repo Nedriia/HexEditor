@@ -17,16 +17,13 @@ class HexEditor_ImGUI : public HexEditor
 {
 	public:
 		HexEditor_ImGUI();
-		~HexEditor_ImGUI();
+		~HexEditor_ImGUI(){};
 
 		int  Init( GLFWwindow* mainWindow );
 		void Update();
 		void UpdateWithDrawList();
 
-		void Quit();
 	private:
-		GLFWwindow*	m_pWindow;
-
 		void SelectAddrToEdit();
 		void DrawAddrSelected( ImDrawList* draw_list, const float fWindowPosX,const float fWindowPosY );
 		void DrawOptions();

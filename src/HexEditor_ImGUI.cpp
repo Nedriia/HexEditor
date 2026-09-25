@@ -20,27 +20,28 @@
 #define CHANGE_DATA_COLOR IM_COL32( 255,0,0,255 )
 #define DEFAULT_DATA_COLOR IM_COL32( 255,255,255,180 )
 
+#define ADDR_COLOR ImVec4( 0.082f, 0.573f, 0.573f, 1.00f ) //IMVEC4
+#define ASCII_COLOR ImVec4( 0.953f, 0.478f, 0.918f, 1.00f )
+#define COL_INDIC_COLOR ImVec4( 0.88f, 0.796f, 0.051f, 1.00f )
+#define OPTIONS_COLOR ImVec4( 0.867f, 0.439f, 0.008f, 1.00f )
+
 static void glfw_error_callback( int error,const char* description )
 {
 	fprintf( stderr,"GLFW Error %d: %s\n",error,description );
 }
 
 HexEditor_ImGUI::HexEditor_ImGUI()
-	: m_pWindow( nullptr )
-	 ,m_bScrollToFocus( false )
-{
-}
-
-HexEditor_ImGUI::~HexEditor_ImGUI()
+	: m_bScrollToFocus( false )
 {
 }
 
 int HexEditor_ImGUI::Init( GLFWwindow* mainWindow )
 {
-	m_pWindow = mainWindow;
+	if ( !mainWindow )
+		return -1;
 
-	glfwSetWindowUserPointer( m_pWindow,this );
-	glfwSetCharCallback( m_pWindow,character_callback );
+	glfwSetWindowUserPointer( mainWindow,this );
+	glfwSetCharCallback( mainWindow,character_callback );
 
 	return 0;
 }
@@ -99,17 +100,22 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 
 	if ( m_pBuffer != nullptr )
 	{
+		draw_list->AddText( pos,ImGui::GetColorU32(ADDR_COLOR ), "ADDR" );
 		pos.x += m_oVisualVariable.fFontAdress;
 		char aBuffer[4] = "";
 		for ( int i = 0; i < m_oVisualVariable.iBytesPerLine; ++i )
 		{
 			ImFormatString( aBuffer, sizeof(aBuffer), "%02X", i );
-			draw_list->AddText( pos,ImGui::GetColorU32(ImGuiCol_TextLink ), aBuffer );
+			draw_list->AddText( pos,ImGui::GetColorU32(COL_INDIC_COLOR ), aBuffer );
 			if ( i + 1 == m_oVisualVariable.iHalfCol )
 				pos.x += m_oVisualVariable.fMidSpaceHex;
 			else
 				pos.x += m_oVisualVariable.fSpaceHex;
 		}
+
+		pos.x = ImGui::GetWindowPos().x + m_oVisualVariable.fXPosStartASCII + m_oVisualVariable.fFontHex + m_oVisualVariable.fSpaceASCII;
+		draw_list->AddText( pos,ImGui::GetColorU32(ASCII_COLOR ), "ASCII" );
+
 		pos.y += m_oVisualVariable.fHeightNewLine;
 		pos.x = ImGui::GetCursorScreenPos().x;
 	}
@@ -226,26 +232,24 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 
 	if( m_pBuffer && m_oVisualVariable.OptShowDataPreview && m_iAdressSelected < m_pBuffer->GetSize() )
 	{
+		char aBuffer[ 8 ];
 		uint8_t iValue = *( m_pBuffer->Get() + m_iAdressSelected );
 
-		char aBuffer[ 24 ];
-		std::snprintf( aBuffer,sizeof( aBuffer ),"DEC : %i",iValue );
+		std::snprintf( aBuffer,sizeof( aBuffer )," : %i",iValue );
 
+		ImGui::TextColored( OPTIONS_COLOR, "DEC" );
+		ImGui::SameLine();
 		ImGui::Text( "%s", aBuffer );
 
-		std::snprintf( aBuffer,sizeof( aBuffer ),"HEX : %02X",iValue );
+		std::snprintf( aBuffer,sizeof( aBuffer )," : %02X",iValue );
+		ImGui::TextColored( OPTIONS_COLOR, "HEX" );
+		ImGui::SameLine();
 		ImGui::Text( "%s", aBuffer );
 
-		ImGui::Text( "Binary : %s",std::bitset<8>( iValue ).to_string().c_str() );
+		ImGui::TextColored( OPTIONS_COLOR, "Binary" );
+		ImGui::SameLine();
+		ImGui::Text( ": %s",std::bitset<8>( iValue ).to_string().c_str() );
 	}
-}
-
-void HexEditor_ImGUI::Quit()
-{
-	if( m_pWindow != nullptr )
-		ImGui::DestroyContext();
-
-	m_pWindow = nullptr;
 }
 
 void HexEditor_ImGUI::SelectAddrToEdit()
