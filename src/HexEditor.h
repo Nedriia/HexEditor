@@ -18,6 +18,14 @@ class HexEditor
 		virtual ~HexEditor();
 		void LoadBufferFromFile( const char* sFile );
 
+		void LoadBufferFromMemory( std::vector< uint8_t >& array )
+		{
+			if ( m_pBuffer == nullptr )
+				m_pBuffer = new Buffer();
+
+			m_pBuffer->LoadFromMemory( array );
+		}
+
 		template <class T, std::size_t N>
 		void LoadBufferFromMemory( T(&array)[N] )
 		{

@@ -8,6 +8,7 @@
 #include <memory>
 #include <climits>
 #include <iostream>
+#include <vector>
 
 # ifndef  _WIN32
 #include <string.h>
@@ -24,6 +25,20 @@ class Buffer
 		Buffer();
 
 		int LoadFromFile( const char* sPathFile );
+
+		int LoadFromMemory( std::vector<uint8_t> array )
+		{
+			int N = array.size();
+			m_aDataBuffer = std::make_unique<uint8_t[]>( N );
+
+			for (std::size_t i = 0; i < N; ++i)
+				m_aDataBuffer[i] = static_cast<uint8_t>( array[i] );
+
+			m_iSize = N;
+
+			return 0;
+		}
+
 		template <class T, std::size_t N>
 		int LoadFromMemory( T(&array)[N] )
 		{
