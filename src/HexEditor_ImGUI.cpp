@@ -330,10 +330,13 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 		ImGui::OpenPopup( "context" );
 
 	int line = 0,col = 0;
-	if( ImGui::IsKeyPressed( ImGuiKey_UpArrow ) ) { line--; }
-	else if( ImGui::IsKeyPressed( ImGuiKey_DownArrow ) ) { line++; }
-	else if( ImGui::IsKeyPressed( ImGuiKey_LeftArrow ) ) { col--; }
-	else if( ImGui::IsKeyPressed( ImGuiKey_RightArrow ) ) { col++; }
+	if( ImGui::IsWindowFocused( ImGuiFocusedFlags_ChildWindows ) )
+	{
+		if( ImGui::IsKeyPressed( ImGuiKey_UpArrow ) ) { line--; }
+		else if( ImGui::IsKeyPressed( ImGuiKey_DownArrow ) ) { line++; }
+		else if( ImGui::IsKeyPressed( ImGuiKey_LeftArrow ) ) { col--; }
+		else if( ImGui::IsKeyPressed( ImGuiKey_RightArrow ) ) { col++; }
+	}
 
 	if( line != 0 || col != 0 )
 	{
