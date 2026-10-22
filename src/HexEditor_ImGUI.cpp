@@ -256,7 +256,7 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 {
 	long long iAdress = m_iAdressSelected;
 
-	if( ImGui::IsMouseClicked( 0 ) )
+	if( ImGui::IsMouseClicked( 0 ) && ImGui::IsPopupOpen( "context" ) == false )
 	{
 		//Determine if the click is in the window and if it's on data
 		ImVec2 mouse_pos = ImGui::GetMousePos();
@@ -327,7 +327,25 @@ void HexEditor_ImGUI::SelectAddrToEdit()
 	}
 
 	if( ImGui::IsMouseClicked( 1 ) )
-		ImGui::OpenPopup( "context" );
+	{
+		//Check if mouse is on current window and focus on it
+		ImVec2 mouse_pos = ImGui::GetMousePos();
+		ImVec2 window_pos = ImGui::GetWindowPos();
+		ImVec2 window_size = ImGui::GetWindowSize();
+
+		ImVec2 zone_min(
+			window_pos.x,
+			window_pos.y
+		);
+
+		ImVec2 zone_max(
+			window_pos.x + window_size.x,
+			window_pos.y + window_size.y
+		);
+
+		if( ImGui::IsMouseHoveringRect( zone_min,zone_max ) )
+			ImGui::OpenPopup( "context" );
+	}
 
 	int line = 0,col = 0;
 	if( ImGui::IsWindowFocused( ImGuiFocusedFlags_ChildWindows ) )
