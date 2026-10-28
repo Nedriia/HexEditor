@@ -46,8 +46,8 @@ class Buffer
 		template <class T, std::size_t N>
 		int LoadFromMemory( const std::array<T, N>& aData )
 		{
-			m_iSize = array.size();
-			m_aDataBuffer = array.data();
+			m_iSize = aData.size();
+			m_aDataBuffer = aData.data();
 
 			return 0;
 		}

@@ -484,13 +484,6 @@ void HexEditor_ImGUI::character_callback( GLFWwindow* window,unsigned int codepo
 		}
 		else
 		{
-			long long iStartAdress = pInstance->m_oVisualVariable.m_iStart * pInstance->m_oVisualVariable.iBytesPerLine;
-			if( pInstance->m_iAdressSelected < iStartAdress ||
-				pInstance->m_iAdressSelected > iStartAdress + ( pInstance->m_oVisualVariable.m_iSize * pInstance->m_oVisualVariable.iBytesPerLine ) )
-			{
-				return;
-			}
-
 			if( pInstance->m_sZoneEditing.empty() )
 			{
 				uint8_t iValue = pInstance->m_pBuffer->ReadAtAdress( pInstance->m_iAdressSelected );
