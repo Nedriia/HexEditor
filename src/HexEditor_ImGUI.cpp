@@ -145,16 +145,19 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 
 	while( clipper.Step() && m_pBuffer )
 	{
-		if( m_oVisualVariable.m_iStart != clipper.DisplayStart || m_oVisualVariable.m_iSize != ( clipper.DisplayEnd - clipper.DisplayStart ) )
-			FillDataToProcess( clipper.DisplayStart,clipper.DisplayEnd );
+		/*if( m_oVisualVariable.m_iStart != clipper.DisplayStart || m_oVisualVariable.m_iSize != ( clipper.DisplayEnd - clipper.DisplayStart ) )
+			FillDataToProcess( clipper.DisplayStart,clipper.DisplayEnd );*/
 
 		for( int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++ )
 		{
 			int iIndexData = line_i - m_oVisualVariable.m_iStart;
-			if( m_oDataFormat[ iIndexData ].m_aAdress.empty() )//TEMP FIX
-				break;
+			//if( m_oDataFormat[ iIndexData ].m_aAdress.empty() )//TEMP FIX
+			//	break;
 
-			draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_TabHovered ),m_oDataFormat[ iIndexData ].m_aAdress.c_str() );
+			char aBuffer[ 16 ] = "";
+			ImFormatString( aBuffer,sizeof( aBuffer ),"0X%08llX",line_i * m_oVisualVariable.iBytesPerLine );
+			draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_TabHovered ),aBuffer );
+
 			pos.x += m_oVisualVariable.fFontAdress;
 
 			for( int n = 0; n < m_oVisualVariable.iBytesPerLine; ++n )
@@ -162,7 +165,13 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 				if( m_oVisualVariable.OptGreyOutZeroes && ( *( m_pBuffer->Get() + ( line_i * m_oVisualVariable.iBytesPerLine ) + n ) ) == 0 )
 					draw_list->AddText( pos,ImGui::ColorConvertFloat4ToU32( ImVec4( 0.40f,0.40f,0.40f,1.00f ) ),"00" );
 				else
-					draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_Text ),m_oDataFormat[ iIndexData ].m_aHexData[ n ].c_str() );
+				{
+					long long iAdress = line_i * m_oVisualVariable.iBytesPerLine;
+					uint8_t* value = m_pBuffer->Get() + ( iAdress );
+
+					ImFormatString( aBuffer,sizeof( aBuffer ),"%02X",*( value + n ) );
+					draw_list->AddText( pos,ImGui::GetColorU32( ImGuiCol_Text ), aBuffer );
+				}
 
 				if( n + 1 == m_oVisualVariable.iHalfCol )
 					pos.x += m_oVisualVariable.fMidSpaceHex;
@@ -188,6 +197,9 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 
 			pos.y += m_oVisualVariable.fHeightNewLine;
 			pos.x = window_pos.x;
+
+			m_oVisualVariable.m_iSize = clipper.DisplayEnd - clipper.DisplayStart;
+			m_oVisualVariable.m_iStart = clipper.DisplayStart;
 		}
 	}
 
@@ -203,7 +215,7 @@ void HexEditor_ImGUI::UpdateWithDrawList()
 		if( m_oVisualVariable.iBytesPerLine < 1 )
 			m_oVisualVariable.iBytesPerLine = 1;
 
-		FillDataToProcess( clipper.DisplayStart,clipper.DisplayEnd );
+		//FillDataToProcess( clipper.DisplayStart,clipper.DisplayEnd );
 	}
 	ImGui::SameLine();
 	if ( m_pBuffer )
@@ -448,6 +460,14 @@ void HexEditor_ImGUI::framebuffer_size_callback( GLFWwindow* m_pWindow,int width
 	glViewport( 0,0,width,height );
 }
 
+uint8_t HexEditor_ImGUI::char_to_hex( char c )
+{
+	if( c >= '0' && c <= '9' ) return c - '0';
+	if( c >= 'a' && c <= 'f' ) return c - 'a' + 10;
+	if( c >= 'A' && c <= 'F' ) return c - 'A' + 10;
+	return -1;
+}
+
 void HexEditor_ImGUI::character_callback( GLFWwindow* window,unsigned int codepoint )
 {
 	char c = std::toupper( static_cast< char >( codepoint ) );
@@ -471,22 +491,22 @@ void HexEditor_ImGUI::character_callback( GLFWwindow* window,unsigned int codepo
 				return;
 			}
 
-			int line = pInstance->m_iAdressSelected / pInstance->m_oVisualVariable.iBytesPerLine;
-			int col = pInstance->m_iAdressSelected % pInstance->m_oVisualVariable.iBytesPerLine;
-
-			line -= pInstance->m_oVisualVariable.m_iStart;
-			if( pInstance->m_oDataFormat[ line ].m_aHexData[ col ].size() >= 2 )
+			if( pInstance->m_sZoneEditing.empty() )
 			{
-				pInstance->m_bIsEditing = true;
-				pInstance->m_oDataFormat[ line ].m_aHexData[ col ] = c;
+				uint8_t iValue = pInstance->m_pBuffer->ReadAtAdress( pInstance->m_iAdressSelected );
+
+				char hex[ 3 ];
+				std::snprintf( hex,sizeof( hex ),"%02X",iValue );
+				pInstance->m_sZoneEditing = hex;
+
+				pInstance->m_pBuffer->SetValueAtAdress( pInstance->m_iAdressSelected, char_to_hex( c ) );
 			}
 			else
 			{
-				pInstance->m_oDataFormat[ line ].m_aHexData[ col ] += c;
-				//Update memory with new value
-				pInstance->m_pBuffer->SetValueAtAdress( pInstance->m_iAdressSelected,std::stoi( pInstance->m_oDataFormat[ line ].m_aHexData[ col ],nullptr,16 ) );
-				//pInstance->m_iAdressSelected++;
-				pInstance->m_bIsEditing = false;
+				char old = static_cast<char>( pInstance->m_pBuffer->ReadAtAdress( pInstance->m_iAdressSelected ) );
+				uint8_t val = static_cast< uint8_t >( ( old << 4 ) | char_to_hex( c ) );
+				pInstance->m_pBuffer->SetValueAtAdress( pInstance->m_iAdressSelected, val );
+				pInstance->m_sZoneEditing.clear();
 			}
 		}
 	}

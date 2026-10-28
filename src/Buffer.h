@@ -26,15 +26,10 @@ class Buffer
 
 		int LoadFromFile( const char* sPathFile );
 
-		int LoadFromMemory( std::vector<uint8_t> array )
+		int LoadFromMemory( std::vector<uint8_t>& array )
 		{
-			int N = array.size();
-			m_aDataBuffer = std::make_unique<uint8_t[]>( N );
-
-			for (std::size_t i = 0; i < N; ++i)
-				m_aDataBuffer[i] = static_cast<uint8_t>( array[i] );
-
-			m_iSize = N;
+			m_iSize = array.size();
+			m_aDataBuffer = array.data();
 
 			return 0;
 		}
@@ -42,12 +37,8 @@ class Buffer
 		template <class T, std::size_t N>
 		int LoadFromMemory( T(&array)[N] )
 		{
-			m_aDataBuffer = std::make_unique<uint8_t[]>( N );
-
-			for (std::size_t i = 0; i < N; ++i)
-				m_aDataBuffer[i] = static_cast<uint8_t>( array[i] );
-
-			m_iSize = N;
+			m_iSize = array.size();
+			m_aDataBuffer = array.data();
 
 			return 0;
 		}
@@ -55,12 +46,8 @@ class Buffer
 		template <class T, std::size_t N>
 		int LoadFromMemory( const std::array<T, N>& aData )
 		{
-			m_aDataBuffer = std::make_unique<uint8_t[]>( N );
-
-			for (std::size_t i = 0; i < N; ++i)
-				m_aDataBuffer[i] = static_cast<uint8_t>( aData[i] );
-
-			m_iSize = N;
+			m_iSize = array.size();
+			m_aDataBuffer = array.data();
 
 			return 0;
 		}
@@ -90,10 +77,10 @@ class Buffer
 		}
 
 		long long GetSize() const { return m_iSize; }
-		uint8_t* Get() { return m_aDataBuffer.get(); }
+		uint8_t* Get() { return m_aDataBuffer; }
 
 	private:
-		std::unique_ptr<uint8_t[]> m_aDataBuffer;
+		uint8_t* m_aDataBuffer;
 		long long m_iSize;
 };
 

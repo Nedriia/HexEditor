@@ -23,11 +23,10 @@ int Buffer::LoadFromFile( const char* sPathFile )
 			if( size <= 0 || size > MemoryMap::MEMORY_SIZE_LIMIT )
 				throw std::runtime_error( "SIZE_INVALID" );
 
-			m_aDataBuffer = std::make_unique<uint8_t[]>( size );
 			m_iSize = size;
 
 			file.seekg( 0,std::ios::beg );
-			file.read( reinterpret_cast< char* >( m_aDataBuffer.get() ),size );
+			file.read( reinterpret_cast< char* >( m_aDataBuffer ),size );
 
 			if( file.gcount() != size )
 				throw std::runtime_error( "READ_SIZE_NOT_CONFORM" );
@@ -36,7 +35,7 @@ int Buffer::LoadFromFile( const char* sPathFile )
 		}
 		catch( std::runtime_error e )
 		{
-			m_aDataBuffer.reset();
+			m_aDataBuffer = nullptr;
 			m_iSize = 0;
 			std::cout << "ERROR::LOADING_" << e.what() << std::endl;
 			return -1;

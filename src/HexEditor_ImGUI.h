@@ -27,6 +27,7 @@ class HexEditor_ImGUI : public HexEditor
 		void SelectAddrToEdit();
 		void DrawAddrSelected( ImDrawList* draw_list, const float fWindowPosX,const float fWindowPosY );
 		void DrawOptions();
+		static uint8_t char_to_hex( char c );
 		static void framebuffer_size_callback(  GLFWwindow* m_pWindow,int width,int height );
 		static void character_callback( GLFWwindow* window,unsigned int codepoint );
 
@@ -39,31 +40,11 @@ class HexEditor_ImGUI : public HexEditor
 				return;
 			}
 
-			if( m_bIsEditing && iAdress != m_iAdressSelected )
+			if( m_sZoneEditing.empty() == false && iAdress != m_iAdressSelected )
 			{
 				//Get back to the original value
-				int lineH = m_iAdressSelected / m_oVisualVariable.iBytesPerLine;
-				int colH = m_iAdressSelected % m_oVisualVariable.iBytesPerLine;
-
-				uint8_t* value = m_pBuffer->Get() + m_iAdressSelected;
-				std::string hex( 3,'\0' );
-				std::snprintf( &hex[ 0 ],hex.size(),"%02X",*( value ) );
-
-				if( lineH < 0 || lineH > m_oVisualVariable.m_iStart + m_oVisualVariable.m_iSize || lineH < m_oVisualVariable.m_iStart )
-				{
-					std::cout << "ERROR::LINE_INDEX" << std::endl;
-					return;
-				}
-				lineH -= m_oVisualVariable.m_iStart;
-
-				if( colH < 0 || colH > m_oVisualVariable.iBytesPerLine )
-				{
-					std::cout << "ERROR::COL_INDEX" << std::endl;
-					return;
-				}
-
-				m_oDataFormat[ lineH ].m_aHexData[ colH ] = hex;
-				m_bIsEditing = false;
+				m_pBuffer->SetValueAtAdress( m_iAdressSelected,std::stoi( m_sZoneEditing,nullptr,16 ) );
+				m_sZoneEditing.clear();
 			}
 
 			m_iAdressSelected = iAdress;

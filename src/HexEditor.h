@@ -46,14 +46,14 @@ class HexEditor
 	protected:
 
 		std::string FormatDebug( const char* sFormat,... );
-		void FillDataToProcess( int iStart,int iEnd );
+		//void FillDataToProcess( int iStart,int iEnd );
 
 		struct MemoryDataFormatted
 		{
 			std::string						m_aAdress;
 			std::vector<std::string>		m_aHexData;
 		};
-		MemoryDataFormatted m_oDataFormat[ 256 ];
+		//MemoryDataFormatted m_oDataFormat[ 256 ];
 
 		struct VisualVariable
 		{
@@ -85,7 +85,7 @@ class HexEditor
 		static Buffer* m_pBuffer;
 
 		long long	m_iAdressSelected;
-		bool		m_bIsEditing;
+		std::string	m_sZoneEditing;
 };
 
 

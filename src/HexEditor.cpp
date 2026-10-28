@@ -15,7 +15,6 @@ Buffer* HexEditor::m_pBuffer = nullptr;
 
 HexEditor::HexEditor()
 	: m_iAdressSelected ( LLONG_MAX )
-	 ,m_bIsEditing( false )
 {
 }
 
@@ -48,45 +47,45 @@ std::string HexEditor::FormatDebug( const char* sFormat,... )
 }
 
 
-void HexEditor::FillDataToProcess( int iStart,int iEnd )
-{
-	if( m_pBuffer == nullptr )
-		return;
-
-	for( int i = iStart; i < iEnd; ++i )
-	{
-		long long iAdress = i * m_oVisualVariable.iBytesPerLine;
-		if( iAdress >= m_pBuffer->GetSize() )
-		{
-			m_oDataFormat[ i - iStart ].m_aAdress = "";
-			continue;
-		}
-
-		std::string output( 13,'\0');
-		std::snprintf( &output[ 0 ], output.size(),"0X%08llX",iAdress);
-		m_oDataFormat[ i - iStart ].m_aAdress = output;
-
-		if( m_oDataFormat[ i - iStart ].m_aHexData.empty() )
-			m_oDataFormat[ i - iStart ].m_aHexData.resize( m_oVisualVariable.iBytesPerLine );
-
-		uint8_t* value = m_pBuffer->Get() + ( iAdress );
-		std::string hex( 3,'\0' );
-		for( int k = 0; k < m_oVisualVariable.iBytesPerLine; ++k )
-		{
-			std::snprintf( &hex[ 0 ],hex.size(),"%02X", *( value + k ) );
-			m_oDataFormat[ i - iStart ].m_aHexData[ k ] = hex;
-		}
-	}
-	m_oVisualVariable.m_iSize = iEnd - iStart;
-	m_oVisualVariable.m_iStart = iStart;
-
-	if( m_iAdressSelected != LLONG_MAX && m_bIsEditing )
-	{
-		long long iStartAdress = iStart * m_oVisualVariable.iBytesPerLine;
-		if( m_iAdressSelected < iStartAdress ||
-			m_iAdressSelected > iStartAdress + ( m_oVisualVariable.m_iSize * m_oVisualVariable.iBytesPerLine ) )
-		{
-			m_bIsEditing = false;
-		}
-	}
-}
+//void HexEditor::FillDataToProcess( int iStart,int iEnd )
+//{
+//	if( m_pBuffer == nullptr )
+//		return;
+//
+//	for( int i = iStart; i < iEnd; ++i )
+//	{
+//		long long iAdress = i * m_oVisualVariable.iBytesPerLine;
+//		if( iAdress >= m_pBuffer->GetSize() )
+//		{
+//			m_oDataFormat[ i - iStart ].m_aAdress = "";
+//			continue;
+//		}
+//
+//		std::string output( 13,'\0');
+//		std::snprintf( &output[ 0 ], output.size(),"0X%08llX",iAdress);
+//		m_oDataFormat[ i - iStart ].m_aAdress = output;
+//
+//		if( m_oDataFormat[ i - iStart ].m_aHexData.empty() )
+//			m_oDataFormat[ i - iStart ].m_aHexData.resize( m_oVisualVariable.iBytesPerLine );
+//
+//		uint8_t* value = m_pBuffer->Get() + ( iAdress );
+//		std::string hex( 3,'\0' );
+//		for( int k = 0; k < m_oVisualVariable.iBytesPerLine; ++k )
+//		{
+//			std::snprintf( &hex[ 0 ],hex.size(),"%02X", *( value + k ) );
+//			m_oDataFormat[ i - iStart ].m_aHexData[ k ] = hex;
+//		}
+//	}
+//	m_oVisualVariable.m_iSize = iEnd - iStart;
+//	m_oVisualVariable.m_iStart = iStart;
+//
+//	if( m_iAdressSelected != LLONG_MAX && m_bIsEditing )
+//	{
+//		long long iStartAdress = iStart * m_oVisualVariable.iBytesPerLine;
+//		if( m_iAdressSelected < iStartAdress ||
+//			m_iAdressSelected > iStartAdress + ( m_oVisualVariable.m_iSize * m_oVisualVariable.iBytesPerLine ) )
+//		{
+//			m_bIsEditing = false;
+//		}
+//	}
+//}
